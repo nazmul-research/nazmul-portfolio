@@ -201,17 +201,18 @@ export default async function HomePage() {
       </section>
 
       <section className="fade-up mt-12 rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-        <h2 className="text-2xl font-semibold text-white">{(settings as unknown as { contributionTitle?: string })?.contributionTitle ?? "Contribution"}</h2>
+        <h2 className="text-2xl font-semibold text-white">How I work</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {((settings as unknown as { contributionText?: string })?.contributionText || "Open-source contributions\nResearch collaboration\nCommunity mentoring")
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .map((line, idx) => (
-              <div key={idx} className="rounded-2xl bg-black/20 p-4">
-                <p className="font-medium text-white">{line}</p>
-              </div>
-            ))}
+          {[
+            ["1. Discover", "Clarify problem, constraints, and success metrics."],
+            ["2. Build", "Rapid prototyping with production-minded architecture."],
+            ["3. Iterate", "Measure, improve, and scale what works."],
+          ].map(([t, d]) => (
+            <div key={t} className="rounded-2xl bg-black/20 p-4">
+              <p className="font-medium text-white">{t}</p>
+              <p className="mt-1 text-sm text-zinc-300">{d}</p>
+            </div>
+          ))}
         </div>
       </section>
 

@@ -39,8 +39,6 @@ const siteSettingsSchema = z.object({
   stat3Value: z.string().trim().optional().or(z.literal("")),
   stat3Desc: z.string().trim().optional().or(z.literal("")),
   marqueeItems: z.string().trim().optional().or(z.literal("")),
-  contributionTitle: z.string().trim().optional().or(z.literal("")),
-  contributionText: z.string().trim().optional().or(z.literal("")),
   bio: z.string().trim().min(10),
   location: z.string().trim().optional(),
   email: z.string().trim().optional().or(z.literal("")),
@@ -140,8 +138,6 @@ async function saveSettings(formData: FormData) {
     stat3Value: String(formData.get("stat3Value") || ""),
     stat3Desc: String(formData.get("stat3Desc") || ""),
     marqueeItems: String(formData.get("marqueeItems") || ""),
-    contributionTitle: String(formData.get("contributionTitle") || ""),
-    contributionText: String(formData.get("contributionText") || ""),
     bio: String(formData.get("bio") || ""),
     location: String(formData.get("location") || ""),
     email: String(formData.get("email") || ""),
@@ -172,8 +168,6 @@ async function saveSettings(formData: FormData) {
       stat3Value: cleanOptional(parsed.data.stat3Value) ?? "Global",
       stat3Desc: cleanOptional(parsed.data.stat3Desc) ?? "Remote-first execution",
       marqueeItems: cleanOptional(parsed.data.marqueeItems) ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely",
-      contributionTitle: cleanOptional(parsed.data.contributionTitle) ?? "Contribution",
-      contributionText: cleanOptional(parsed.data.contributionText) ?? "Open-source contributions\nResearch collaboration\nCommunity mentoring",
       bio: parsed.data.bio,
       location: cleanOptional(parsed.data.location),
       email: normalizeEmail(parsed.data.email),
@@ -200,8 +194,6 @@ async function saveSettings(formData: FormData) {
       stat3Value: cleanOptional(parsed.data.stat3Value) ?? "Global",
       stat3Desc: cleanOptional(parsed.data.stat3Desc) ?? "Remote-first execution",
       marqueeItems: cleanOptional(parsed.data.marqueeItems) ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely",
-      contributionTitle: cleanOptional(parsed.data.contributionTitle) ?? "Contribution",
-      contributionText: cleanOptional(parsed.data.contributionText) ?? "Open-source contributions\nResearch collaboration\nCommunity mentoring",
       bio: parsed.data.bio,
       location: cleanOptional(parsed.data.location),
       email: normalizeEmail(parsed.data.email),
@@ -1002,14 +994,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input name="stat3Desc" defaultValue={(settings as unknown as { stat3Desc?: string })?.stat3Desc ?? "Remote-first execution"} placeholder="Card 3 description" className="rounded-lg border px-3 py-2" />
 
               <input name="marqueeItems" defaultValue={(settings as unknown as { marqueeItems?: string })?.marqueeItems ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely"} placeholder="Marquee items separated by |" className="rounded-lg border px-3 py-2 md:col-span-3" />
-            </div>
-          </details>
-
-          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
-            <summary className="cursor-pointer text-sm font-medium">Contribution section</summary>
-            <div className="mt-3 grid gap-3">
-              <input name="contributionTitle" defaultValue={(settings as unknown as { contributionTitle?: string })?.contributionTitle ?? "Contribution"} placeholder="Contribution title" className="rounded-lg border px-3 py-2" />
-              <textarea name="contributionText" defaultValue={(settings as unknown as { contributionText?: string })?.contributionText ?? "Open-source contributions\nResearch collaboration\nCommunity mentoring"} placeholder="One point per line" className="min-h-24 rounded-lg border px-3 py-2" />
             </div>
           </details>
           <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />

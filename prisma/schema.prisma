@@ -22,8 +22,6 @@ model SiteSettings {
   stat3Value      String?  @default("Global")
   stat3Desc       String?  @default("Remote-first execution")
   marqueeItems    String?  @default("⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely")
-  contributionTitle String? @default("Contribution")
-  contributionText  String? @default("Open-source contributions\nResearch collaboration\nCommunity mentoring")
   bio             String
   location        String?
   email           String?
