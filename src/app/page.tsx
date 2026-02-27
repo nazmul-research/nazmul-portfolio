@@ -3,6 +3,18 @@ import Link from "next/link";
 import Script from "next/script";
 import { prisma } from "@/lib/prisma";
 
+function SocialIcon({ kind }: { kind: "email" | "whatsapp" | "linkedin" | "github" | "scholar" | "researchgate" }) {
+  const d: Record<string, string> = {
+    email: "M4 6h16v12H4z M4 7l8 6 8-6",
+    whatsapp: "M12 21a9 9 0 1 0-7.8-4.5L3 21l4.7-1.2A9 9 0 0 0 12 21zm-3.5-5.8c2.6 1.8 4.7 1.5 6.3 1 .5-.2 1.5-1.2 1.6-1.8.1-.4 0-.7-.3-.8l-2.1-1c-.3-.1-.5 0-.7.2l-.8 1c-.2.2-.4.2-.7.1-.8-.3-2.5-1.4-3.1-2.2-.2-.2-.2-.5 0-.7l.7-.8c.2-.2.3-.5.2-.8l-.9-2.2c-.1-.3-.4-.4-.8-.3-.6.1-1.6 1-1.8 1.5-.5 1.6.1 3.8 2.4 5.8z",
+    linkedin: "M6 9h3v9H6zM7.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM11 9h2.8v1.3h.1c.4-.8 1.4-1.6 2.8-1.6 3 0 3.5 2 3.5 4.6V18h-3v-4c0-1 0-2.3-1.4-2.3s-1.6 1-1.6 2.2V18h-3z",
+    github: "M12 3a9 9 0 0 0-2.8 17.6c.4.1.6-.2.6-.4v-1.5c-2.5.5-3-1-3-1-.4-1-.9-1.2-.9-1.2-.8-.5.1-.5.1-.5.9.1 1.4.9 1.4.9.8 1.4 2.2 1 2.7.8.1-.6.3-1 .6-1.2-2-.2-4-.9-4-4.2 0-1 .4-1.9.9-2.5-.1-.2-.4-1.1.1-2.4 0 0 .8-.2 2.5.9a8.6 8.6 0 0 1 4.5 0c1.7-1.1 2.5-.9 2.5-.9.5 1.3.2 2.2.1 2.4.6.6.9 1.5.9 2.5 0 3.3-2 4-4 4.2.3.3.6.8.6 1.6v2.3c0 .3.2.5.6.4A9 9 0 0 0 12 3z",
+    scholar: "M12 4 3 9l9 5 7-3.9V16h2V9L12 4zm-5 8v3c0 2.2 10 2.2 10 0v-3l-5 2.8L7 12z",
+    researchgate: "M5 4h8c3 0 5 2 5 5 0 2.3-1.1 3.8-3.1 4.5L19 20h-3.4l-3.6-6H8v6H5V4zm3 2v6h4c1.8 0 3-.9 3-3s-1.2-3-3-3H8z",
+  };
+  return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={d[kind]} /></svg>;
+}
+
 export default async function HomePage() {
   const now = new Date();
   const settings = await prisma.siteSettings.findUnique({ where: { id: "main" } });
@@ -66,13 +78,13 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
-              {settings?.email && <a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>✉️</span>Email</a>}
-              {socials?.whatsappUrl && <a href={socials.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>💬</span>WhatsApp</a>}
-              {socials?.linkedinUrl && <a href={socials.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>in</span>LinkedIn</a>}
-              {socials?.githubUrl && <a href={socials.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🐙</span>GitHub 1</a>}
-              {socials?.githubUrl2 && <a href={socials.githubUrl2} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🐙</span>GitHub 2</a>}
-              {socials?.scholarUrl && <a href={socials.scholarUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🎓</span>Google Scholar</a>}
-              {socials?.researchGateUrl && <a href={socials.researchGateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🧪</span>ResearchGate</a>}
+              {settings?.email && <a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="email" />Email</a>}
+              {socials?.whatsappUrl && <a href={socials.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="whatsapp" />WhatsApp</a>}
+              {socials?.linkedinUrl && <a href={socials.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="linkedin" />LinkedIn</a>}
+              {socials?.githubUrl && <a href={socials.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 1</a>}
+              {socials?.githubUrl2 && <a href={socials.githubUrl2} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 2</a>}
+              {socials?.scholarUrl && <a href={socials.scholarUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="scholar" />Google Scholar</a>}
+              {socials?.researchGateUrl && <a href={socials.researchGateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="researchgate" />ResearchGate</a>}
             </div>
           </div>
 
