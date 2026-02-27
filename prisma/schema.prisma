@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model SiteSettings {
+  id            String   @id @default("main")
+  fullName      String
+  headline      String
+  bio           String
+  location      String?
+  email         String?
+  linkedinUrl   String?
+  githubUrl     String?
+  avatarUrl     String?
+  updatedAt     DateTime @updatedAt
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  summary       String
+  content       String
+  stack         String?
+  imageUrl      String?
+  demoUrl       String?
+  repoUrl       String?
+  featured      Boolean   @default(false)
+  featuredOrder Int       @default(0)
+  sortOrder     Int       @default(0)
+  published     Boolean   @default(false)
+  publishAt     DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Post {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  excerpt       String
+  content       String
+  tags          String?
+  imageUrl      String?
+  sortOrder     Int       @default(0)
+  published     Boolean   @default(false)
+  publishAt     DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model AdminUser {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  passwordUpdatedAt DateTime @default(now())
+  name              String
+  role              String   @default("editor")
+  active            Boolean  @default(true)
+  totpEnabled       Boolean  @default(false)
+  totpSecret        String?
+  recoveryCodesHash String?
+  sessionVersion    Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model LoginThrottle {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  failedCount Int      @default(0)
+  lockUntil   DateTime?
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorEmail String?
+  actorRole  String?
+  action     String
+  targetType String
+  targetId   String?
+  meta       String?
+  createdAt  DateTime @default(now())
+}
