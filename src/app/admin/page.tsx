@@ -14,6 +14,7 @@ import ReorderList from "@/components/reorder-list";
 import LivePreviewTextarea from "@/components/live-preview-textarea";
 import UrlImagePreview from "@/components/url-image-preview";
 import SlugHelper from "@/components/slug-helper";
+import BioField from "@/components/bio-field";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { authenticator } from "otplib";
@@ -913,7 +914,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <ImageUploader targetInputId="site-avatar-url" />
             <UrlImagePreview inputId="site-avatar-url" />
           </div>
-          <textarea name="bio" defaultValue={settings?.bio ?? ""} placeholder="Bio" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" required />
+          <BioField initial={settings?.bio ?? ""} />
           <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
         </form>
 
