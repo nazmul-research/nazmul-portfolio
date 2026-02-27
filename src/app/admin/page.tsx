@@ -29,6 +29,16 @@ const siteSettingsSchema = z.object({
   fullName: z.string().trim().min(2),
   headline: z.string().trim().min(3),
   availabilityTag: z.string().trim().optional().or(z.literal("")),
+  stat1Label: z.string().trim().optional().or(z.literal("")),
+  stat1Value: z.string().trim().optional().or(z.literal("")),
+  stat1Desc: z.string().trim().optional().or(z.literal("")),
+  stat2Label: z.string().trim().optional().or(z.literal("")),
+  stat2Value: z.string().trim().optional().or(z.literal("")),
+  stat2Desc: z.string().trim().optional().or(z.literal("")),
+  stat3Label: z.string().trim().optional().or(z.literal("")),
+  stat3Value: z.string().trim().optional().or(z.literal("")),
+  stat3Desc: z.string().trim().optional().or(z.literal("")),
+  marqueeItems: z.string().trim().optional().or(z.literal("")),
   bio: z.string().trim().min(10),
   location: z.string().trim().optional(),
   email: z.string().trim().optional().or(z.literal("")),
@@ -118,6 +128,16 @@ async function saveSettings(formData: FormData) {
     fullName: String(formData.get("fullName") || ""),
     headline: String(formData.get("headline") || ""),
     availabilityTag: String(formData.get("availabilityTag") || ""),
+    stat1Label: String(formData.get("stat1Label") || ""),
+    stat1Value: String(formData.get("stat1Value") || ""),
+    stat1Desc: String(formData.get("stat1Desc") || ""),
+    stat2Label: String(formData.get("stat2Label") || ""),
+    stat2Value: String(formData.get("stat2Value") || ""),
+    stat2Desc: String(formData.get("stat2Desc") || ""),
+    stat3Label: String(formData.get("stat3Label") || ""),
+    stat3Value: String(formData.get("stat3Value") || ""),
+    stat3Desc: String(formData.get("stat3Desc") || ""),
+    marqueeItems: String(formData.get("marqueeItems") || ""),
     bio: String(formData.get("bio") || ""),
     location: String(formData.get("location") || ""),
     email: String(formData.get("email") || ""),
@@ -138,6 +158,16 @@ async function saveSettings(formData: FormData) {
       fullName: parsed.data.fullName,
       headline: parsed.data.headline,
       availabilityTag: cleanOptional(parsed.data.availabilityTag) ?? "Available for Biomedical + AI + Robotics projects",
+      stat1Label: cleanOptional(parsed.data.stat1Label) ?? "Systems shipped",
+      stat1Value: cleanOptional(parsed.data.stat1Value) ?? "10+",
+      stat1Desc: cleanOptional(parsed.data.stat1Desc) ?? "From prototype to production",
+      stat2Label: cleanOptional(parsed.data.stat2Label) ?? "Focus",
+      stat2Value: cleanOptional(parsed.data.stat2Value) ?? "AI + Robotics",
+      stat2Desc: cleanOptional(parsed.data.stat2Desc) ?? "Agent systems, automation, productization",
+      stat3Label: cleanOptional(parsed.data.stat3Label) ?? "Collaboration",
+      stat3Value: cleanOptional(parsed.data.stat3Value) ?? "Global",
+      stat3Desc: cleanOptional(parsed.data.stat3Desc) ?? "Remote-first execution",
+      marqueeItems: cleanOptional(parsed.data.marqueeItems) ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely",
       bio: parsed.data.bio,
       location: cleanOptional(parsed.data.location),
       email: normalizeEmail(parsed.data.email),
@@ -154,6 +184,16 @@ async function saveSettings(formData: FormData) {
       fullName: parsed.data.fullName,
       headline: parsed.data.headline,
       availabilityTag: cleanOptional(parsed.data.availabilityTag) ?? "Available for Biomedical + AI + Robotics projects",
+      stat1Label: cleanOptional(parsed.data.stat1Label) ?? "Systems shipped",
+      stat1Value: cleanOptional(parsed.data.stat1Value) ?? "10+",
+      stat1Desc: cleanOptional(parsed.data.stat1Desc) ?? "From prototype to production",
+      stat2Label: cleanOptional(parsed.data.stat2Label) ?? "Focus",
+      stat2Value: cleanOptional(parsed.data.stat2Value) ?? "AI + Robotics",
+      stat2Desc: cleanOptional(parsed.data.stat2Desc) ?? "Agent systems, automation, productization",
+      stat3Label: cleanOptional(parsed.data.stat3Label) ?? "Collaboration",
+      stat3Value: cleanOptional(parsed.data.stat3Value) ?? "Global",
+      stat3Desc: cleanOptional(parsed.data.stat3Desc) ?? "Remote-first execution",
+      marqueeItems: cleanOptional(parsed.data.marqueeItems) ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely",
       bio: parsed.data.bio,
       location: cleanOptional(parsed.data.location),
       email: normalizeEmail(parsed.data.email),
@@ -937,6 +977,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <input name="headline" defaultValue={settings?.headline ?? "AI • Robotics • Agent Systems"} placeholder="Headline" className="rounded-lg border px-3 py-2" required />
           <input name="availabilityTag" defaultValue={(settings as unknown as { availabilityTag?: string })?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"} placeholder="Availability tag" className="rounded-lg border px-3 py-2" />
           <input name="location" defaultValue={settings?.location ?? ""} placeholder="Location" className="rounded-lg border px-3 py-2" />
+
+          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
+            <summary className="cursor-pointer text-sm font-medium">Hero / Main section</summary>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <input name="stat1Label" defaultValue={(settings as unknown as { stat1Label?: string })?.stat1Label ?? "Systems shipped"} placeholder="Card 1 label" className="rounded-lg border px-3 py-2" />
+              <input name="stat1Value" defaultValue={(settings as unknown as { stat1Value?: string })?.stat1Value ?? "10+"} placeholder="Card 1 value" className="rounded-lg border px-3 py-2" />
+              <input name="stat1Desc" defaultValue={(settings as unknown as { stat1Desc?: string })?.stat1Desc ?? "From prototype to production"} placeholder="Card 1 description" className="rounded-lg border px-3 py-2" />
+
+              <input name="stat2Label" defaultValue={(settings as unknown as { stat2Label?: string })?.stat2Label ?? "Focus"} placeholder="Card 2 label" className="rounded-lg border px-3 py-2" />
+              <input name="stat2Value" defaultValue={(settings as unknown as { stat2Value?: string })?.stat2Value ?? "AI + Robotics"} placeholder="Card 2 value" className="rounded-lg border px-3 py-2" />
+              <input name="stat2Desc" defaultValue={(settings as unknown as { stat2Desc?: string })?.stat2Desc ?? "Agent systems, automation, productization"} placeholder="Card 2 description" className="rounded-lg border px-3 py-2" />
+
+              <input name="stat3Label" defaultValue={(settings as unknown as { stat3Label?: string })?.stat3Label ?? "Collaboration"} placeholder="Card 3 label" className="rounded-lg border px-3 py-2" />
+              <input name="stat3Value" defaultValue={(settings as unknown as { stat3Value?: string })?.stat3Value ?? "Global"} placeholder="Card 3 value" className="rounded-lg border px-3 py-2" />
+              <input name="stat3Desc" defaultValue={(settings as unknown as { stat3Desc?: string })?.stat3Desc ?? "Remote-first execution"} placeholder="Card 3 description" className="rounded-lg border px-3 py-2" />
+
+              <input name="marqueeItems" defaultValue={(settings as unknown as { marqueeItems?: string })?.marqueeItems ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely"} placeholder="Marquee items separated by |" className="rounded-lg border px-3 py-2 md:col-span-3" />
+            </div>
+          </details>
           <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
           <input type="url" name="linkedinUrl" defaultValue={settings?.linkedinUrl ?? "https://www.linkedin.com/in/nazmul87/"} placeholder="LinkedIn URL" className="rounded-lg border px-3 py-2" />
           <input type="url" name="githubUrl" defaultValue={settings?.githubUrl ?? "https://github.com/mdnazmulislam0087"} placeholder="GitHub URL" className="rounded-lg border px-3 py-2" />

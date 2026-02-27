@@ -40,6 +40,16 @@ export default async function HomePage() {
     researchGateUrl?: string | null;
   };
 
+  const stats = [
+    [settings?.stat1Label ?? "Systems shipped", settings?.stat1Value ?? "10+", settings?.stat1Desc ?? "From prototype to production"],
+    [settings?.stat2Label ?? "Focus", settings?.stat2Value ?? "AI + Robotics", settings?.stat2Desc ?? "Agent systems, automation, productization"],
+    [settings?.stat3Label ?? "Collaboration", settings?.stat3Value ?? "Global", settings?.stat3Desc ?? "Remote-first execution"],
+  ];
+  const marquee = (settings?.marqueeItems || "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely")
+    .split("|")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   const personLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -124,11 +134,7 @@ export default async function HomePage() {
       </section>
 
       <section className="fade-up mt-10 grid gap-4 md:grid-cols-3">
-        {[
-          ["Systems shipped", "10+", "From prototype to production"],
-          ["Focus", "AI + Robotics", "Agent systems, automation, productization"],
-          ["Collaboration", "Global", "Remote-first execution"],
-        ].map(([k, v, s]) => (
+        {stats.map(([k, v, s]) => (
           <div key={k} className="glass-card rounded-2xl p-5">
             <p className="text-xs uppercase tracking-wide text-zinc-400">{k}</p>
             <p className="mt-1 text-2xl font-bold text-white">{v}</p>
@@ -139,21 +145,7 @@ export default async function HomePage() {
 
       <section className="fade-up mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] py-3">
         <div className="auto-scroll-track whitespace-nowrap text-sm text-zinc-300">
-          {[
-            "⚡ Autonomous Agents",
-            "🤖 Robotics Workflow",
-            "🧠 AI Product Engineering",
-            "🔁 Automation Systems",
-            "📊 Reliability + Observability",
-            "🚀 Ship Fast, Scale Safely",
-          ].concat([
-            "⚡ Autonomous Agents",
-            "🤖 Robotics Workflow",
-            "🧠 AI Product Engineering",
-            "🔁 Automation Systems",
-            "📊 Reliability + Observability",
-            "🚀 Ship Fast, Scale Safely",
-          ]).map((item, idx) => (
+          {marquee.concat(marquee).map((item, idx) => (
             <span key={idx} className="mx-4 inline-block">{item}</span>
           ))}
         </div>
