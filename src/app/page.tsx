@@ -16,6 +16,7 @@ export default async function HomePage() {
     take: 3,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
+  const mediaAssets = await prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 2 });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const socials = settings as unknown as {
@@ -23,6 +24,7 @@ export default async function HomePage() {
     githubUrl?: string | null;
     whatsappUrl?: string | null;
     scholarUrl?: string | null;
+    githubUrl2?: string | null;
     researchGateUrl?: string | null;
   };
 
@@ -36,7 +38,7 @@ export default async function HomePage() {
       "I build practical AI systems, automation workflows, and product experiences that convert research into real outcomes.",
     url: siteUrl,
     email: settings?.email ? `mailto:${settings.email}` : undefined,
-    sameAs: [socials?.linkedinUrl, socials?.githubUrl, socials?.whatsappUrl, socials?.scholarUrl, socials?.researchGateUrl].filter(Boolean),
+    sameAs: [socials?.linkedinUrl, socials?.githubUrl, socials?.githubUrl2, socials?.whatsappUrl, socials?.scholarUrl, socials?.researchGateUrl].filter(Boolean),
     knowsAbout: ["Artificial Intelligence", "Robotics", "Agent Systems", "Automation"],
   };
 
@@ -61,25 +63,46 @@ export default async function HomePage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/projects" className="glow-btn rounded-xl bg-white px-4 py-2 text-zinc-900 shadow-sm transition hover:-translate-y-0.5">View Projects</Link>
               <Link href="/blog" className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10">Read Blog</Link>
-              {socials?.linkedinUrl && <a href={socials.linkedinUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
-              {socials?.githubUrl && <a href={socials.githubUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">GitHub</a>}
-              {socials?.whatsappUrl && <a href={socials.whatsappUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">WhatsApp</a>}
-              {socials?.scholarUrl && <a href={socials.scholarUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">Google Scholar</a>}
-              {socials?.researchGateUrl && <a href={socials.researchGateUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">ResearchGate</a>}
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              {settings?.email && <a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>✉️</span>Email</a>}
+              {socials?.whatsappUrl && <a href={socials.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>💬</span>WhatsApp</a>}
+              {socials?.linkedinUrl && <a href={socials.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>in</span>LinkedIn</a>}
+              {socials?.githubUrl && <a href={socials.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🐙</span>GitHub 1</a>}
+              {socials?.githubUrl2 && <a href={socials.githubUrl2} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🐙</span>GitHub 2</a>}
+              {socials?.scholarUrl && <a href={socials.scholarUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🎓</span>Google Scholar</a>}
+              {socials?.researchGateUrl && <a href={socials.researchGateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><span>🧪</span>ResearchGate</a>}
             </div>
           </div>
 
           <div className="mx-auto md:ml-auto">
-            <div className="relative h-56 w-56 rounded-full border-2 border-white/30 bg-white/5 p-2 shadow-[0_0_60px_rgba(99,102,241,0.35)]">
-              {settings?.avatarUrl ? (
-                <Image
-                  src={settings.avatarUrl}
-                  alt={settings?.fullName ?? "Profile photo"}
-                  width={224}
-                  height={224}
-                  unoptimized
-                  className="h-full w-full rounded-full object-cover"
-                />
+            <div className="relative h-56 w-56 overflow-hidden rounded-full border-2 border-white/30 bg-white/5 p-2 shadow-[0_0_60px_rgba(99,102,241,0.35)]">
+              {(mediaAssets.length > 0 || settings?.avatarUrl) ? (
+                <>
+                  {mediaAssets.length > 0 ? (
+                    mediaAssets.map((m, idx) => (
+                      <Image
+                        key={m.id}
+                        src={m.url}
+                        alt={`Profile ${idx + 1}`}
+                        width={224}
+                        height={224}
+                        unoptimized
+                        className={`absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover ${idx % 2 === 0 ? "avatar-swap-a" : "avatar-swap-b"}`}
+                      />
+                    ))
+                  ) : (
+                    <Image
+                      src={settings!.avatarUrl!}
+                      alt={settings?.fullName ?? "Profile photo"}
+                      width={224}
+                      height={224}
+                      unoptimized
+                      className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover"
+                    />
+                  )}
+                </>
               ) : (
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-white/5 text-xs text-zinc-300">Upload your photo in CMS → Site Settings</div>
               )}
