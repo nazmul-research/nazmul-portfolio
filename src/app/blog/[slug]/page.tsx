@@ -29,7 +29,7 @@ export default async function BlogPostPage({
       <h1 className="text-4xl font-bold text-white">{post.title}</h1>
       <p className="mt-2 text-zinc-400">{new Date(post.createdAt).toLocaleDateString()}</p>
       {post.imageUrl && (
-        <Image src={post.imageUrl} alt={post.title} width={1200} height={520} className="mt-6 h-64 w-full rounded-2xl object-cover" />
+        <Image src={post.imageUrl} alt={post.title} width={1200} height={520} unoptimized className="mt-6 h-64 w-full rounded-2xl object-cover" />
       )}
       <article className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-sm">
         <RichText content={post.content} />

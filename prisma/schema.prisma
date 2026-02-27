@@ -83,6 +83,12 @@ model LoginThrottle {
   updatedAt   DateTime @updatedAt
 }
 
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String
+  createdAt DateTime @default(now())
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   actorEmail String?

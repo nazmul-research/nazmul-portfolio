@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -19,17 +18,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Only image uploads are allowed" }, { status: 400 });
   }
 
+  const max = 4 * 1024 * 1024;
+  if (file.size > max) {
+    return NextResponse.json({ error: "Image too large (max 4MB)" }, { status: 400 });
+  }
+
   const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+  const base64 = Buffer.from(bytes).toString("base64");
+  const dataUrl = `data:${file.type};base64,${base64}`;
 
-  const ext = path.extname(file.name) || ".png";
-  const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+  const asset = await prisma.mediaAsset.create({ data: { url: dataUrl } });
+  return NextResponse.json({ id: asset.id, url: asset.url });
+}
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const targetPath = path.join(uploadDir, safeName);
-  await writeFile(targetPath, buffer);
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  return NextResponse.json({ url: `/uploads/${safeName}` });
+  await prisma.mediaAsset.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
 }

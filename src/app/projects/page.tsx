@@ -24,6 +24,7 @@ export default async function ProjectsPage() {
                   alt={p.title}
                   width={900}
                   height={360}
+                  unoptimized
                   className="mb-4 h-44 w-full rounded-xl object-cover"
                 />
               )}

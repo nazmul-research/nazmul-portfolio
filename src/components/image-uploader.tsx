@@ -17,7 +17,7 @@ function readAsDataUrl(file: File) {
   });
 }
 
-async function cropToDataUrl(src: string, pixels: Area): Promise<string> {
+async function cropToBlob(src: string, pixels: Area): Promise<Blob> {
   const img = new window.Image();
   img.src = src;
   await new Promise((resolve, reject) => {
@@ -29,10 +29,12 @@ async function cropToDataUrl(src: string, pixels: Area): Promise<string> {
   canvas.width = Math.max(1, Math.floor(pixels.width));
   canvas.height = Math.max(1, Math.floor(pixels.height));
   const ctx = canvas.getContext("2d");
-  if (!ctx) return src;
+  if (!ctx) throw new Error("Canvas not available");
 
   ctx.drawImage(img, pixels.x, pixels.y, pixels.width, pixels.height, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.9);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+  if (!blob) throw new Error("Failed to generate cropped image");
+  return blob;
 }
 
 export default function ImageUploader({ targetInputId }: Props) {
@@ -44,12 +46,17 @@ export default function ImageUploader({ targetInputId }: Props) {
   const [aspect, setAspect] = useState<number>(1);
   const [cropPixels, setCropPixels] = useState<Area | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   function applyValue(value: string) {
     setPreview(value);
     const input = document.getElementById(targetInputId) as HTMLInputElement | null;
-    if (input) input.value = value;
+    if (input) {
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   }
 
   async function handlePick(file: File) {
@@ -68,11 +75,22 @@ export default function ImageUploader({ targetInputId }: Props) {
   async function applyCrop() {
     if (!source || !cropPixels) return;
     try {
-      const out = await cropToDataUrl(source, cropPixels);
-      applyValue(out);
+      setUploading(true);
+      const blob = await cropToBlob(source, cropPixels);
+      const body = new FormData();
+      body.append("file", new File([blob], "crop.jpg", { type: "image/jpeg" }));
+
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const raw = await res.text();
+      const data = raw ? JSON.parse(raw) : {};
+      if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
+
+      applyValue(String(data.url));
       setSource(null);
-    } catch {
-      setError("Cropping failed.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Cropping/upload failed.");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -96,18 +114,15 @@ export default function ImageUploader({ targetInputId }: Props) {
         }}
       />
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          onClick={() => fileRef.current?.click()}
-        >
+        <button type="button" className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700" onClick={() => fileRef.current?.click()}>
           Choose image
         </button>
         <span className="truncate text-xs text-zinc-500">{fileName || "No file chosen"}</span>
       </div>
 
+      {uploading && <p className="text-xs text-zinc-500">Uploading...</p>}
       {error && <p className="text-xs text-red-600">{error}</p>}
-      {preview && <Image src={preview} alt="Upload preview" width={120} height={120} className="h-24 w-24 rounded-md object-cover" />}
+      {preview && <Image src={preview} alt="Upload preview" width={120} height={120} unoptimized className="h-24 w-24 rounded-md object-cover" />}
 
       {source && (
         <div className="space-y-2 rounded-lg border p-2">
@@ -119,8 +134,8 @@ export default function ImageUploader({ targetInputId }: Props) {
             <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
           </div>
           <div className="flex gap-2">
-            <button type="button" className="btn-primary" onClick={() => void applyCrop()}>Apply crop</button>
-            <button type="button" className="btn-secondary" onClick={() => setSource(null)}>Cancel</button>
+            <button type="button" className="btn-primary" onClick={() => void applyCrop()} disabled={uploading}>Apply crop</button>
+            <button type="button" className="btn-secondary" onClick={() => setSource(null)} disabled={uploading}>Cancel</button>
           </div>
         </div>
       )}

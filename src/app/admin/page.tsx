@@ -19,8 +19,7 @@ import { z } from "zod";
 import QRCode from "qrcode";
 import { authenticator } from "otplib";
 import { generateRecoveryCodes, hashRecoveryCodes } from "@/lib/recovery-codes";
-import { readdir } from "node:fs/promises";
-import path from "node:path";
+
 
 type AdminPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -526,6 +525,17 @@ async function togglePostPublish(formData: FormData) {
   adminRedirect(published ? "post-unpublished" : "post-published");
 }
 
+async function deleteMediaAsset(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") || "").trim();
+  if (!id) adminRedirect("media-delete-failed");
+
+  await prisma.mediaAsset.delete({ where: { id } });
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "media.delete", targetType: "media", targetId: id });
+  adminRedirect("media-deleted");
+}
+
 async function createAdminUser(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
@@ -712,7 +722,9 @@ const statusText: Record<string, string> = {
   "recovery-codes-regenerated": "✅ Recovery codes regenerated",
   "sessions-revoked": "✅ Your sessions were revoked. Please re-login on other devices.",
   "sessions-revoked-all": "✅ All admin sessions revoked",
-  "slug-conflict": "⚠️ Slug already exists. Choose a unique slug.", 
+  "slug-conflict": "⚠️ Slug already exists. Choose a unique slug.",
+  "media-deleted": "✅ Media deleted",
+  "media-delete-failed": "⚠️ Media delete failed", 
 };
 
 function badgeTone(published: boolean) {
@@ -824,13 +836,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...(filter === "draft" ? { published: false } : {}),
   };
 
-  const [settings, projects, posts, adminUsers, auditLogs, me] = await Promise.all([
+  const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.project.findMany({ where: projectWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.post.findMany({ where: postWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
+    prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 24 }),
   ]);
 
   const setupTotpSecret = me && !me.totpEnabled ? authenticator.generateSecret() : null;
@@ -843,13 +856,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const postSlugs = posts.map((p) => p.slug);
   const previewToken = process.env.DRAFT_PREVIEW_TOKEN || "preview-dev-token";
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  let uploadFiles: string[] = [];
-  try {
-    uploadFiles = (await readdir(uploadsDir)).filter((f) => !f.startsWith(".")).sort().reverse().slice(0, 24);
-  } catch {
-    uploadFiles = [];
-  }
+
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-10 text-zinc-900" id="main-content">
@@ -938,19 +945,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
         <div className="mt-6 rounded-xl border border-zinc-200 p-4">
           <h3 className="text-sm font-semibold text-zinc-700">Media Library (latest uploads)</h3>
-          {uploadFiles.length === 0 ? (
+          {mediaAssets.length === 0 ? (
             <div className="mt-2 rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use any upload button to add images.</div>
           ) : (
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              {uploadFiles.map((file) => {
-                const src = `/uploads/${file}`;
-                return (
-                  <div key={file} className="rounded-lg border p-2">
-                    <Image src={src} alt={file} width={280} height={120} className="h-24 w-full rounded object-cover" />
-                    <p className="mt-2 truncate text-[11px] text-zinc-600">{src}</p>
-                  </div>
-                );
-              })}
+              {mediaAssets.map((asset) => (
+                <div key={asset.id} className="rounded-lg border p-2">
+                  <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
+                  <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
+                  <form action={deleteMediaAsset} className="mt-2">
+                    <input type="hidden" name="id" value={asset.id} />
+                    <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
+                  </form>
+                </div>
+              ))}
             </div>
           )}
         </div>

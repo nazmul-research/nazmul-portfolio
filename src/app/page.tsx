@@ -77,6 +77,7 @@ export default async function HomePage() {
                   alt={settings?.fullName ?? "Profile photo"}
                   width={224}
                   height={224}
+                  unoptimized
                   className="h-full w-full rounded-full object-cover"
                 />
               ) : (
@@ -140,6 +141,7 @@ export default async function HomePage() {
                     alt={p.title}
                     width={640}
                     height={256}
+                    unoptimized
                     className="mb-3 h-32 w-full rounded-lg object-cover"
                   />
                 )}

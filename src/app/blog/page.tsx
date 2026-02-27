@@ -20,7 +20,7 @@ export default async function BlogPage() {
           posts.map((b) => (
             <Link key={b.id} href={`/blog/${b.slug}`} className="block glass-card rounded-3xl p-6 transition hover:bg-white/[0.05]">
               {b.imageUrl && (
-                <Image src={b.imageUrl} alt={b.title} width={900} height={340} className="mb-4 h-40 w-full rounded-xl object-cover" />
+                <Image src={b.imageUrl} alt={b.title} width={900} height={340} unoptimized className="mb-4 h-40 w-full rounded-xl object-cover" />
               )}
               <h2 className="text-2xl font-semibold text-white">{b.title}</h2>
               <p className="mt-2 text-zinc-300">{b.excerpt}</p>
