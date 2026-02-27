@@ -8,20 +8,21 @@ datasource db {
 }
 
 model SiteSettings {
-  id            String   @id @default("main")
-  fullName      String
-  headline      String
-  bio           String
-  location      String?
-  email         String?
-  linkedinUrl   String?
-  githubUrl     String?
-  githubUrl2    String?
-  whatsappUrl   String?
-  scholarUrl    String?
+  id              String   @id @default("main")
+  fullName        String
+  headline        String
+  availabilityTag String?  @default("Available for Biomedical + AI + Robotics projects")
+  bio             String
+  location        String?
+  email           String?
+  linkedinUrl     String?
+  githubUrl       String?
+  githubUrl2      String?
+  whatsappUrl     String?
+  scholarUrl      String?
   researchGateUrl String?
-  avatarUrl     String?
-  updatedAt     DateTime @updatedAt
+  avatarUrl       String?
+  updatedAt       DateTime @updatedAt
 }
 
 model Project {

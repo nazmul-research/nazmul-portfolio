@@ -28,6 +28,7 @@ type AdminPageProps = {
 const siteSettingsSchema = z.object({
   fullName: z.string().trim().min(2),
   headline: z.string().trim().min(3),
+  availabilityTag: z.string().trim().optional().or(z.literal("")),
   bio: z.string().trim().min(10),
   location: z.string().trim().optional(),
   email: z.string().trim().optional().or(z.literal("")),
@@ -116,6 +117,7 @@ async function saveSettings(formData: FormData) {
   const parsed = siteSettingsSchema.safeParse({
     fullName: String(formData.get("fullName") || ""),
     headline: String(formData.get("headline") || ""),
+    availabilityTag: String(formData.get("availabilityTag") || ""),
     bio: String(formData.get("bio") || ""),
     location: String(formData.get("location") || ""),
     email: String(formData.get("email") || ""),
@@ -135,6 +137,7 @@ async function saveSettings(formData: FormData) {
     update: {
       fullName: parsed.data.fullName,
       headline: parsed.data.headline,
+      availabilityTag: cleanOptional(parsed.data.availabilityTag) ?? "Available for Biomedical + AI + Robotics projects",
       bio: parsed.data.bio,
       location: cleanOptional(parsed.data.location),
       email: normalizeEmail(parsed.data.email),
@@ -150,6 +153,7 @@ async function saveSettings(formData: FormData) {
       id: "main",
       fullName: parsed.data.fullName,
       headline: parsed.data.headline,
+      availabilityTag: cleanOptional(parsed.data.availabilityTag) ?? "Available for Biomedical + AI + Robotics projects",
       bio: parsed.data.bio,
       location: cleanOptional(parsed.data.location),
       email: normalizeEmail(parsed.data.email),
@@ -931,6 +935,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <form action={saveSettings} className="grid gap-3 md:grid-cols-2">
           <input name="fullName" defaultValue={settings?.fullName ?? "Nazmul Islam"} placeholder="Full name" className="rounded-lg border px-3 py-2" required />
           <input name="headline" defaultValue={settings?.headline ?? "AI • Robotics • Agent Systems"} placeholder="Headline" className="rounded-lg border px-3 py-2" required />
+          <input name="availabilityTag" defaultValue={(settings as unknown as { availabilityTag?: string })?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"} placeholder="Availability tag" className="rounded-lg border px-3 py-2" />
           <input name="location" defaultValue={settings?.location ?? ""} placeholder="Location" className="rounded-lg border px-3 py-2" />
           <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
           <input type="url" name="linkedinUrl" defaultValue={settings?.linkedinUrl ?? "https://www.linkedin.com/in/nazmul87/"} placeholder="LinkedIn URL" className="rounded-lg border px-3 py-2" />

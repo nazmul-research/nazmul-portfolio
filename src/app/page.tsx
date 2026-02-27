@@ -67,7 +67,7 @@ export default async function HomePage() {
 
         <div className="grid items-center gap-8 md:grid-cols-[1.25fr_.75fr]">
           <div>
-            <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-zinc-200">Available for AI + Robotics projects</p>
+            <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-zinc-200">{settings?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"}</p>
             <h1 className="mt-4 display-font text-4xl font-extrabold tracking-tight text-white md:text-6xl">{settings?.fullName ?? "Nazmul Islam"}</h1>
             <p className="mt-3 text-lg text-zinc-200 md:text-2xl">{settings?.headline ?? "AI • Robotics • Agent Systems"}</p>
             <p className="mt-4 max-w-3xl text-zinc-300">{settings?.bio ?? "I build intelligent systems, practical software, and automation workflows that ship."}</p>
