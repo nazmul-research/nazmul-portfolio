@@ -16,6 +16,9 @@ model SiteSettings {
   email         String?
   linkedinUrl   String?
   githubUrl     String?
+  whatsappUrl   String?
+  scholarUrl    String?
+  researchGateUrl String?
   avatarUrl     String?
   updatedAt     DateTime @updatedAt
 }

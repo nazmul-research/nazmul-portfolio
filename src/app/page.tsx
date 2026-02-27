@@ -18,6 +18,14 @@ export default async function HomePage() {
   });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const socials = settings as unknown as {
+    linkedinUrl?: string | null;
+    githubUrl?: string | null;
+    whatsappUrl?: string | null;
+    scholarUrl?: string | null;
+    researchGateUrl?: string | null;
+  };
+
   const personLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -28,7 +36,7 @@ export default async function HomePage() {
       "I build practical AI systems, automation workflows, and product experiences that convert research into real outcomes.",
     url: siteUrl,
     email: settings?.email ? `mailto:${settings.email}` : undefined,
-    sameAs: [settings?.linkedinUrl, settings?.githubUrl].filter(Boolean),
+    sameAs: [socials?.linkedinUrl, socials?.githubUrl, socials?.whatsappUrl, socials?.scholarUrl, socials?.researchGateUrl].filter(Boolean),
     knowsAbout: ["Artificial Intelligence", "Robotics", "Agent Systems", "Automation"],
   };
 
@@ -53,8 +61,11 @@ export default async function HomePage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/projects" className="glow-btn rounded-xl bg-white px-4 py-2 text-zinc-900 shadow-sm transition hover:-translate-y-0.5">View Projects</Link>
               <Link href="/blog" className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10">Read Blog</Link>
-              {settings?.linkedinUrl && <a href={settings.linkedinUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
-              {settings?.githubUrl && <a href={settings.githubUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">GitHub</a>}
+              {socials?.linkedinUrl && <a href={socials.linkedinUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
+              {socials?.githubUrl && <a href={socials.githubUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">GitHub</a>}
+              {socials?.whatsappUrl && <a href={socials.whatsappUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">WhatsApp</a>}
+              {socials?.scholarUrl && <a href={socials.scholarUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">Google Scholar</a>}
+              {socials?.researchGateUrl && <a href={socials.researchGateUrl} className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10" target="_blank" rel="noopener noreferrer">ResearchGate</a>}
             </div>
           </div>
 

@@ -34,6 +34,9 @@ const siteSettingsSchema = z.object({
   email: z.string().trim().email().optional().or(z.literal("")),
   linkedinUrl: z.string().trim().optional().or(z.literal("")),
   githubUrl: z.string().trim().optional().or(z.literal("")),
+  whatsappUrl: z.string().trim().optional().or(z.literal("")),
+  scholarUrl: z.string().trim().optional().or(z.literal("")),
+  researchGateUrl: z.string().trim().optional().or(z.literal("")),
   avatarUrl: z.string().trim().optional().or(z.literal("")),
 });
 
@@ -118,6 +121,9 @@ async function saveSettings(formData: FormData) {
     email: String(formData.get("email") || ""),
     linkedinUrl: String(formData.get("linkedinUrl") || ""),
     githubUrl: String(formData.get("githubUrl") || ""),
+    whatsappUrl: String(formData.get("whatsappUrl") || ""),
+    scholarUrl: String(formData.get("scholarUrl") || ""),
+    researchGateUrl: String(formData.get("researchGateUrl") || ""),
     avatarUrl: String(formData.get("avatarUrl") || ""),
   });
 
@@ -133,6 +139,9 @@ async function saveSettings(formData: FormData) {
       email: normalizeEmail(parsed.data.email),
       linkedinUrl: normalizeUrl(parsed.data.linkedinUrl),
       githubUrl: normalizeUrl(parsed.data.githubUrl),
+      whatsappUrl: normalizeUrl(parsed.data.whatsappUrl),
+      scholarUrl: normalizeUrl(parsed.data.scholarUrl),
+      researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
     },
     create: {
@@ -144,6 +153,9 @@ async function saveSettings(formData: FormData) {
       email: normalizeEmail(parsed.data.email),
       linkedinUrl: normalizeUrl(parsed.data.linkedinUrl),
       githubUrl: normalizeUrl(parsed.data.githubUrl),
+      whatsappUrl: normalizeUrl(parsed.data.whatsappUrl),
+      scholarUrl: normalizeUrl(parsed.data.scholarUrl),
+      researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
     },
   });
@@ -912,6 +924,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
           <input type="url" name="linkedinUrl" defaultValue={settings?.linkedinUrl ?? "https://www.linkedin.com/in/nazmul87/"} placeholder="LinkedIn URL" className="rounded-lg border px-3 py-2" />
           <input type="url" name="githubUrl" defaultValue={settings?.githubUrl ?? "https://github.com/mdnazmulislam0087"} placeholder="GitHub URL" className="rounded-lg border px-3 py-2" />
+          <input type="url" name="whatsappUrl" defaultValue={(settings as unknown as { whatsappUrl?: string })?.whatsappUrl ?? "https://wa.me/"} placeholder="WhatsApp URL" className="rounded-lg border px-3 py-2" />
+          <input type="url" name="scholarUrl" defaultValue={(settings as unknown as { scholarUrl?: string })?.scholarUrl ?? "https://scholar.google.com/"} placeholder="Google Scholar URL" className="rounded-lg border px-3 py-2" />
+          <input type="url" name="researchGateUrl" defaultValue={(settings as unknown as { researchGateUrl?: string })?.researchGateUrl ?? "https://www.researchgate.net/"} placeholder="ResearchGate URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
           <div className="space-y-2 md:col-span-2">
             <input id="site-avatar-url" type="url" name="avatarUrl" defaultValue={settings?.avatarUrl ?? ""} placeholder="Avatar URL" className="w-full rounded-lg border px-3 py-2" />
             <ImageUploader targetInputId="site-avatar-url" />

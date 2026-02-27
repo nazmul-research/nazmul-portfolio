@@ -31,19 +31,8 @@ async function cropToDataUrl(src: string, pixels: Area): Promise<string> {
   const ctx = canvas.getContext("2d");
   if (!ctx) return src;
 
-  ctx.drawImage(
-    img,
-    pixels.x,
-    pixels.y,
-    pixels.width,
-    pixels.height,
-    0,
-    0,
-    canvas.width,
-    canvas.height,
-  );
-
-  return canvas.toDataURL("image/jpeg", 0.92);
+  ctx.drawImage(img, pixels.x, pixels.y, pixels.width, pixels.height, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.9);
 }
 
 export default function ImageUploader({ targetInputId }: Props) {
@@ -93,15 +82,7 @@ export default function ImageUploader({ targetInputId }: Props) {
         <button type="button" className={`rounded border px-2 py-1 ${aspect === 4 / 5 ? "bg-zinc-100" : ""}`} onClick={() => setAspect(4 / 5)}>4:5</button>
       </div>
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) void handlePick(file);
-        }}
-        className="block w-full text-sm"
-      />
+      <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handlePick(file); }} className="block w-full text-sm" />
 
       {error && <p className="text-xs text-red-600">{error}</p>}
       {preview && <Image src={preview} alt="Upload preview" width={120} height={120} className="h-24 w-24 rounded-md object-cover" />}
@@ -109,15 +90,7 @@ export default function ImageUploader({ targetInputId }: Props) {
       {source && (
         <div className="space-y-2 rounded-lg border p-2">
           <div className="relative h-64 w-full overflow-hidden rounded bg-zinc-100">
-            <Cropper
-              image={source}
-              crop={crop}
-              zoom={zoom}
-              aspect={aspect}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={(_, pixels) => setCropPixels(pixels)}
-            />
+            <Cropper image={source} crop={crop} zoom={zoom} aspect={aspect} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(_, pixels) => setCropPixels(pixels)} />
           </div>
           <div className="flex items-center gap-2 text-xs">
             <label>Zoom</label>
