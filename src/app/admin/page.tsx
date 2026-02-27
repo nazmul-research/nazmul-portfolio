@@ -32,9 +32,9 @@ const siteSettingsSchema = z.object({
   bio: z.string().trim().min(10),
   location: z.string().trim().optional(),
   email: z.string().trim().email().optional().or(z.literal("")),
-  linkedinUrl: z.string().trim().url().optional().or(z.literal("")),
-  githubUrl: z.string().trim().url().optional().or(z.literal("")),
-  avatarUrl: z.string().trim().url().optional().or(z.literal("")),
+  linkedinUrl: z.string().trim().optional().or(z.literal("")),
+  githubUrl: z.string().trim().optional().or(z.literal("")),
+  avatarUrl: z.string().trim().optional().or(z.literal("")),
 });
 
 const projectSchema = z.object({
@@ -42,7 +42,7 @@ const projectSchema = z.object({
   summary: z.string().trim().min(10),
   content: z.string().trim().min(10),
   stack: z.string().trim().optional(),
-  imageUrl: z.string().trim().url().optional().or(z.literal("")),
+  imageUrl: z.string().trim().optional().or(z.literal("")),
   demoUrl: z.string().trim().url().optional().or(z.literal("")),
   repoUrl: z.string().trim().url().optional().or(z.literal("")),
   featured: z.boolean(),
@@ -56,7 +56,7 @@ const postSchema = z.object({
   excerpt: z.string().trim().min(10),
   content: z.string().trim().min(10),
   tags: z.string().trim().optional(),
-  imageUrl: z.string().trim().url().optional().or(z.literal("")),
+  imageUrl: z.string().trim().optional().or(z.literal("")),
   published: z.boolean(),
   publishAt: z.string().optional().or(z.literal("")),
 });
@@ -70,9 +70,12 @@ function normalizeUrl(value: string | null | undefined) {
   const raw = String(value || "").trim();
   if (!raw) return null;
 
+  if (raw.startsWith("data:image/")) return raw;
+  if (raw.startsWith("/")) return raw;
+
   try {
     const url = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
-    if (!["http:", "https:"].includes(url.protocol)) return null;
+    if (!["http:", "https:", "data:"].includes(url.protocol)) return null;
     return url.toString();
   } catch {
     return null;

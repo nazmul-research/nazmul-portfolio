@@ -2,78 +2,133 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import Cropper, { Area } from "react-easy-crop";
 
 type Props = {
   targetInputId: string;
 };
 
+function readAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ""));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+async function cropToDataUrl(src: string, pixels: Area): Promise<string> {
+  const img = new window.Image();
+  img.src = src;
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.floor(pixels.width));
+  canvas.height = Math.max(1, Math.floor(pixels.height));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return src;
+
+  ctx.drawImage(
+    img,
+    pixels.x,
+    pixels.y,
+    pixels.width,
+    pixels.height,
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
 export default function ImageUploader({ targetInputId }: Props) {
-  const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cropSquare, setCropSquare] = useState(true);
+  const [source, setSource] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [aspect, setAspect] = useState<number>(1);
+  const [cropPixels, setCropPixels] = useState<Area | null>(null);
 
-  async function toSquareBlob(file: File): Promise<Blob> {
-    const bitmap = await createImageBitmap(file);
-    const size = Math.min(bitmap.width, bitmap.height);
-    const sx = Math.floor((bitmap.width - size) / 2);
-    const sy = Math.floor((bitmap.height - size) / 2);
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return file;
-    ctx.drawImage(bitmap, sx, sy, size, size, 0, 0, size, size);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    return blob || file;
+  function applyValue(value: string) {
+    setPreview(value);
+    const input = document.getElementById(targetInputId) as HTMLInputElement | null;
+    if (input) input.value = value;
   }
 
-  async function handleFile(file: File) {
+  async function handlePick(file: File) {
     setError(null);
-    setUploading(true);
     try {
-      const uploadFile = cropSquare ? new File([await toSquareBlob(file)], file.name.replace(/\.[^.]+$/, "") + "-crop.jpg", { type: "image/jpeg" }) : file;
+      const dataUrl = await readAsDataUrl(file);
+      setSource(dataUrl);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    } catch {
+      setError("Could not read image file.");
+    }
+  }
 
-      const body = new FormData();
-      body.append("file", uploadFile);
-      const res = await fetch("/api/upload", { method: "POST", body });
-      const raw = await res.text();
-      let data: { url?: string; error?: string } = {};
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch {
-        data = { error: "Upload failed: server returned invalid response" };
-      }
-      if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
-
-      setPreview(data.url);
-      const input = document.getElementById(targetInputId) as HTMLInputElement | null;
-      if (input) input.value = data.url;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setUploading(false);
+  async function applyCrop() {
+    if (!source || !cropPixels) return;
+    try {
+      const out = await cropToDataUrl(source, cropPixels);
+      applyValue(out);
+      setSource(null);
+    } catch {
+      setError("Cropping failed.");
     }
   }
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-xs">
-        <input id={`crop-${targetInputId}`} type="checkbox" checked={cropSquare} onChange={(e) => setCropSquare(e.target.checked)} />
-        <label htmlFor={`crop-${targetInputId}`}>Crop to square</label>
+        <label>Aspect:</label>
+        <button type="button" className={`rounded border px-2 py-1 ${aspect === 1 ? "bg-zinc-100" : ""}`} onClick={() => setAspect(1)}>1:1</button>
+        <button type="button" className={`rounded border px-2 py-1 ${aspect === 16 / 9 ? "bg-zinc-100" : ""}`} onClick={() => setAspect(16 / 9)}>16:9</button>
+        <button type="button" className={`rounded border px-2 py-1 ${aspect === 4 / 5 ? "bg-zinc-100" : ""}`} onClick={() => setAspect(4 / 5)}>4:5</button>
       </div>
+
       <input
         type="file"
         accept="image/*"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) void handleFile(file);
+          if (file) void handlePick(file);
         }}
         className="block w-full text-sm"
       />
-      {uploading && <p className="text-xs text-zinc-500">Uploading...</p>}
+
       {error && <p className="text-xs text-red-600">{error}</p>}
-      {preview && <Image src={preview} alt="Upload preview" width={80} height={80} className="h-20 w-20 rounded-md object-cover" />}
+      {preview && <Image src={preview} alt="Upload preview" width={120} height={120} className="h-24 w-24 rounded-md object-cover" />}
+
+      {source && (
+        <div className="space-y-2 rounded-lg border p-2">
+          <div className="relative h-64 w-full overflow-hidden rounded bg-zinc-100">
+            <Cropper
+              image={source}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={(_, pixels) => setCropPixels(pixels)}
+            />
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <label>Zoom</label>
+            <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+          </div>
+          <div className="flex gap-2">
+            <button type="button" className="btn-primary" onClick={() => void applyCrop()}>Apply crop</button>
+            <button type="button" className="btn-secondary" onClick={() => setSource(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
