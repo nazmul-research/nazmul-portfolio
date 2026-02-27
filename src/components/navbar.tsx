@@ -13,8 +13,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
-    const saved = localStorage.getItem("theme");
-    return saved === "light" ? "light" : "dark";
+    return localStorage.getItem("theme") === "light" ? "light" : "dark";
   });
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <button type="button" onClick={toggleTheme} className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 transition hover:bg-white/10 hover:text-white">
+            <button type="button" onClick={toggleTheme} suppressHydrationWarning className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 transition hover:bg-white/10 hover:text-white">
               {theme === "dark" ? "☀️" : "🌙"}
             </button>
             <Link href="/admin" className="glow-btn rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 transition hover:bg-white/10 hover:text-white">
@@ -77,6 +76,7 @@ export default function Navbar() {
               type="button"
               className="block w-full rounded-md border border-white/20 px-2 py-2 text-left text-sm text-zinc-100 transition hover:bg-white/10"
               onClick={toggleTheme}
+              suppressHydrationWarning
             >
               Switch to {theme === "dark" ? "light" : "dark"} mode
             </button>

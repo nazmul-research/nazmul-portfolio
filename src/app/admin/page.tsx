@@ -31,7 +31,7 @@ const siteSettingsSchema = z.object({
   headline: z.string().trim().min(3),
   bio: z.string().trim().min(10),
   location: z.string().trim().optional(),
-  email: z.string().trim().email().optional().or(z.literal("")),
+  email: z.string().trim().optional().or(z.literal("")),
   linkedinUrl: z.string().trim().optional().or(z.literal("")),
   githubUrl: z.string().trim().optional().or(z.literal("")),
   whatsappUrl: z.string().trim().optional().or(z.literal("")),

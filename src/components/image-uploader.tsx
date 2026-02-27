@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 
 type Props = {
@@ -43,6 +43,8 @@ export default function ImageUploader({ targetInputId }: Props) {
   const [zoom, setZoom] = useState(1);
   const [aspect, setAspect] = useState<number>(1);
   const [cropPixels, setCropPixels] = useState<Area | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   function applyValue(value: string) {
     setPreview(value);
@@ -52,6 +54,7 @@ export default function ImageUploader({ targetInputId }: Props) {
 
   async function handlePick(file: File) {
     setError(null);
+    setFileName(file.name);
     try {
       const dataUrl = await readAsDataUrl(file);
       setSource(dataUrl);
@@ -82,7 +85,26 @@ export default function ImageUploader({ targetInputId }: Props) {
         <button type="button" className={`rounded border px-2 py-1 ${aspect === 4 / 5 ? "bg-zinc-100" : ""}`} onClick={() => setAspect(4 / 5)}>4:5</button>
       </div>
 
-      <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handlePick(file); }} className="block w-full text-sm" />
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handlePick(file);
+        }}
+      />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          onClick={() => fileRef.current?.click()}
+        >
+          Choose image
+        </button>
+        <span className="truncate text-xs text-zinc-500">{fileName || "No file chosen"}</span>
+      </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
       {preview && <Image src={preview} alt="Upload preview" width={120} height={120} className="h-24 w-24 rounded-md object-cover" />}
