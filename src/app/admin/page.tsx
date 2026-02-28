@@ -57,6 +57,7 @@ const siteSettingsSchema = z.object({
 
 const projectSchema = z.object({
   title: z.string().trim().min(2),
+  excerpt: z.string().trim().min(10),
   details: z.string().trim().min(10),
   projectImages: z.string().trim().optional().or(z.literal("")),
   demoUrl: z.string().trim().optional().or(z.literal("")),
@@ -331,6 +332,7 @@ async function createProject(formData: FormData) {
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
     details: String(formData.get("details") || ""),
     projectImages: String(formData.get("projectImages") || ""),
     demoUrl: String(formData.get("demoUrl") || ""),
@@ -354,7 +356,7 @@ async function createProject(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug,
-      summary: detailsWords.slice(0, 35).join(" "),
+      summary: parsed.data.excerpt || detailsWords.slice(0, 35).join(" "),
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
@@ -383,6 +385,7 @@ async function updateProject(formData: FormData) {
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
     details: String(formData.get("details") || ""),
     projectImages: String(formData.get("projectImages") || ""),
     demoUrl: String(formData.get("demoUrl") || ""),
@@ -407,7 +410,7 @@ async function updateProject(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug: slugInput || undefined,
-      summary: detailsWords.slice(0, 35).join(" "),
+      summary: parsed.data.excerpt || detailsWords.slice(0, 35).join(" "),
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
@@ -1304,6 +1307,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
           <input type="text" name="demoUrl" placeholder="Project demo/live URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
           <input type="text" name="repoUrl" placeholder="GitHub URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
+          <textarea name="excerpt" placeholder="Project excerpt (short summary)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" required />
           <textarea name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
           <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Project" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
@@ -1333,6 +1337,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </div>
                 <input type="text" name="demoUrl" defaultValue={p.demoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="Project demo/live URL" />
                 <input type="text" name="repoUrl" defaultValue={p.repoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="GitHub URL (optional)" />
+                <textarea name="excerpt" defaultValue={p.summary} className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" placeholder="Project excerpt" required />
                 <textarea name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
                 <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
                 <div className="flex flex-wrap gap-2 md:col-span-2">
@@ -1365,12 +1370,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 ) : (
                   <form action={deleteProject}>
                     <input type="hidden" name="id" value={p.id} />
-                    <ConfirmSubmitButton
-                      idleText="Move to Trash"
-                      pendingText="Moving..."
-                      confirmMessage="Move this project to trash?"
-                      className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
-                    />
+                    <ConfirmSubmitButton idleText="Delete" pendingText="Deleting..." confirmMessage="Move this project to trash?" className="btn-danger" />
                   </form>
                 )}
               </div>
