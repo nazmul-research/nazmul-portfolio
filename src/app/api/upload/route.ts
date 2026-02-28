@@ -10,19 +10,21 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file");
   const context = String(formData.get("context") || "blog").trim().toLowerCase();
-  const kind = context === "profile" ? "profile" : "blog";
+  const kind = context === "profile" ? "profile" : context === "cv" ? "cv" : "blog";
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
   }
 
-  if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Only image uploads are allowed" }, { status: 400 });
+  const isImage = file.type.startsWith("image/");
+  const isPdf = file.type === "application/pdf";
+  if (!isImage && !isPdf) {
+    return NextResponse.json({ error: "Only image or PDF uploads are allowed" }, { status: 400 });
   }
 
-  const max = 4 * 1024 * 1024;
+  const max = isPdf ? 8 * 1024 * 1024 : 4 * 1024 * 1024;
   if (file.size > max) {
-    return NextResponse.json({ error: "Image too large (max 4MB)" }, { status: 400 });
+    return NextResponse.json({ error: isPdf ? "PDF too large (max 8MB)" : "Image too large (max 4MB)" }, { status: 400 });
   }
 
   const bytes = await file.arrayBuffer();

@@ -19,6 +19,7 @@ import WriterStatus from "@/components/writer-status";
 import PublishChecklist from "@/components/publish-checklist";
 import PublicationExcerptTool from "@/components/publication-excerpt-tool";
 import ProjectExcerptTool from "@/components/project-excerpt-tool";
+import CvUploader from "@/components/cv-uploader";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { authenticator } from "otplib";
@@ -54,6 +55,10 @@ const siteSettingsSchema = z.object({
   scholarUrl: z.string().trim().optional().or(z.literal("")),
   researchGateUrl: z.string().trim().optional().or(z.literal("")),
   contactRaw: z.string().trim().optional().or(z.literal("")),
+  aboutBlock1: z.string().trim().optional().or(z.literal("")),
+  aboutBlock2: z.string().trim().optional().or(z.literal("")),
+  aboutBlock3: z.string().trim().optional().or(z.literal("")),
+  cvUrl: z.string().trim().optional().or(z.literal("")),
   avatarUrl: z.string().trim().optional().or(z.literal("")),
 });
 
@@ -239,6 +244,10 @@ async function saveSettings(formData: FormData) {
     scholarUrl: String(formData.get("scholarUrl") || ""),
     researchGateUrl: String(formData.get("researchGateUrl") || ""),
     contactRaw: String(formData.get("contactRaw") || ""),
+    aboutBlock1: String(formData.get("aboutBlock1") || ""),
+    aboutBlock2: String(formData.get("aboutBlock2") || ""),
+    aboutBlock3: String(formData.get("aboutBlock3") || ""),
+    cvUrl: String(formData.get("cvUrl") || ""),
     avatarUrl: String(formData.get("avatarUrl") || ""),
   });
 
@@ -271,6 +280,10 @@ async function saveSettings(formData: FormData) {
       scholarUrl: normalizeUrl(parsed.data.scholarUrl),
       researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
       contactRaw: cleanOptional(parsed.data.contactRaw),
+      aboutBlock1: cleanOptional(parsed.data.aboutBlock1),
+      aboutBlock2: cleanOptional(parsed.data.aboutBlock2),
+      aboutBlock3: cleanOptional(parsed.data.aboutBlock3),
+      cvUrl: normalizeUrl(parsed.data.cvUrl),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
     },
     create: {
@@ -299,6 +312,10 @@ async function saveSettings(formData: FormData) {
       scholarUrl: normalizeUrl(parsed.data.scholarUrl),
       researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
       contactRaw: cleanOptional(parsed.data.contactRaw),
+      aboutBlock1: cleanOptional(parsed.data.aboutBlock1),
+      aboutBlock2: cleanOptional(parsed.data.aboutBlock2),
+      aboutBlock3: cleanOptional(parsed.data.aboutBlock3),
+      cvUrl: normalizeUrl(parsed.data.cvUrl),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
     },
   });
@@ -691,262 +708,6 @@ async function deleteMediaAsset(formData: FormData) {
   adminRedirect("media-deleted");
 }
 
-async function markMediaAsProfile(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("media-update-failed");
-
-  await prisma.mediaAsset.update({ where: { id }, data: { kind: "profile" } });
-  revalidatePath("/admin");
-  revalidatePath("/");
-  await writeAuditLog({ action: "media.mark_profile", targetType: "media", targetId: id });
-  adminRedirect("media-profile-updated");
-}
-
-async function createAdminUser(formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
-
-  const email = String(formData.get("email") || "").trim().toLowerCase();
-  const password = String(formData.get("password") || "").trim();
-  const name = String(formData.get("name") || "").trim() || "Editor";
-  const userRole = String(formData.get("role") || "editor").trim() || "editor";
-
-  if (!email || password.length < 8) adminRedirect("admin-user-invalid");
-
-  const passwordHash = await hashPassword(password);
-
-  await prisma.adminUser.upsert({
-    where: { email },
-    update: { password: passwordHash, passwordUpdatedAt: new Date(), name, role: userRole, active: true, sessionVersion: { increment: 1 } },
-    create: { email, password: passwordHash, passwordUpdatedAt: new Date(), name, role: userRole, active: true },
-  });
-
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "admin_user.upsert", targetType: "admin_user", targetId: email, meta: userRole });
-  adminRedirect("admin-user-saved");
-}
-
-async function toggleAdminUserActive(formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const actorRole = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || actorRole !== "owner") adminRedirect("admin-forbidden");
-
-  const id = String(formData.get("id") || "").trim();
-  const active = String(formData.get("active") || "false") === "true";
-  if (!id) adminRedirect("admin-user-invalid");
-
-  await prisma.adminUser.update({ where: { id }, data: { active: !active } });
-  revalidatePath("/admin");
-  await writeAuditLog({ action: active ? "admin_user.deactivate" : "admin_user.activate", targetType: "admin_user", targetId: id });
-  adminRedirect(active ? "admin-user-deactivated" : "admin-user-activated");
-}
-
-async function forceLogoutMySessions() {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email?.toLowerCase();
-  if (!email) adminRedirect("admin-forbidden");
-
-  await prisma.adminUser.update({ where: { email }, data: { sessionVersion: { increment: 1 } } });
-  await writeAuditLog({ action: "admin_user.force_logout_self", targetType: "admin_user", targetId: email });
-  adminRedirect("sessions-revoked");
-}
-
-async function forceLogoutAllAdminSessions() {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user?.email || role !== "owner") adminRedirect("admin-forbidden");
-
-  await prisma.adminUser.updateMany({ data: { sessionVersion: { increment: 1 } } });
-  await writeAuditLog({ action: "admin_user.force_logout_all", targetType: "admin_user", targetId: "all" });
-  adminRedirect("sessions-revoked-all");
-}
-
-async function changeMyPassword(formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email?.toLowerCase();
-  if (!email) adminRedirect("admin-forbidden");
-
-  const currentPassword = String(formData.get("currentPassword") || "");
-  const newPassword = String(formData.get("newPassword") || "");
-  const confirmPassword = String(formData.get("confirmPassword") || "");
-
-  if (newPassword.length < 8 || newPassword !== confirmPassword) adminRedirect("password-invalid");
-
-  const admin = await prisma.adminUser.findUnique({ where: { email } });
-  if (!admin) adminRedirect("password-invalid");
-
-  const ok = await verifyPassword(currentPassword, admin.password);
-  if (!ok) adminRedirect("password-invalid");
-
-  const hashed = await hashPassword(newPassword);
-  await prisma.adminUser.update({ where: { id: admin.id }, data: { password: hashed, passwordUpdatedAt: new Date(), sessionVersion: { increment: 1 } } });
-
-  await writeAuditLog({ action: "admin_user.change_password", targetType: "admin_user", targetId: admin.id });
-  adminRedirect("password-changed");
-}
-
-async function enableMyTotp(formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email?.toLowerCase();
-  if (!email) adminRedirect("admin-forbidden");
-
-  const token = String(formData.get("totpToken") || "").trim().replace(/\s+/g, "");
-  const secret = String(formData.get("totpSecret") || "").trim();
-  if (!token || !secret) adminRedirect("totp-invalid");
-
-  const valid = authenticator.verify({ token, secret });
-  if (!valid) adminRedirect("totp-invalid");
-
-  const recoveryCodes = generateRecoveryCodes(8);
-  const recoveryCodesHash = await hashRecoveryCodes(recoveryCodes);
-
-  await prisma.adminUser.update({ where: { email }, data: { totpEnabled: true, totpSecret: secret, recoveryCodesHash } });
-  await writeAuditLog({ action: "admin_user.enable_totp", targetType: "admin_user", targetId: email });
-
-  const encoded = encodeURIComponent(Buffer.from(JSON.stringify(recoveryCodes)).toString("base64"));
-  redirect(`/admin?status=totp-enabled&codes=${encoded}`);
-}
-
-async function disableMyTotp(formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email?.toLowerCase();
-  if (!email) adminRedirect("admin-forbidden");
-
-  const password = String(formData.get("password") || "");
-  const admin = await prisma.adminUser.findUnique({ where: { email } });
-  if (!admin) adminRedirect("totp-invalid");
-
-  const ok = await verifyPassword(password, admin.password);
-  if (!ok) adminRedirect("totp-invalid");
-
-  await prisma.adminUser.update({ where: { email }, data: { totpEnabled: false, totpSecret: null, recoveryCodesHash: null } });
-  await writeAuditLog({ action: "admin_user.disable_totp", targetType: "admin_user", targetId: email });
-  adminRedirect("totp-disabled");
-}
-
-async function regenerateRecoveryCodes(formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email?.toLowerCase();
-  if (!email) adminRedirect("admin-forbidden");
-
-  const password = String(formData.get("password") || "");
-  const admin = await prisma.adminUser.findUnique({ where: { email } });
-  if (!admin || !admin.totpEnabled) adminRedirect("totp-invalid");
-
-  const ok = await verifyPassword(password, admin.password);
-  if (!ok) adminRedirect("totp-invalid");
-
-  const recoveryCodes = generateRecoveryCodes(8);
-  const recoveryCodesHash = await hashRecoveryCodes(recoveryCodes);
-
-  await prisma.adminUser.update({ where: { email }, data: { recoveryCodesHash } });
-  await writeAuditLog({ action: "admin_user.regenerate_recovery_codes", targetType: "admin_user", targetId: email });
-
-  const encoded = encodeURIComponent(Buffer.from(JSON.stringify(recoveryCodes)).toString("base64"));
-  redirect(`/admin?status=recovery-codes-regenerated&codes=${encoded}`);
-}
-
-async function createPublication(formData: FormData) {
-  "use server";
-
-  const parsed = publicationSchema.safeParse({
-    title: String(formData.get("title") || ""),
-    authors: String(formData.get("authors") || ""),
-    venue: String(formData.get("venue") || ""),
-    year: String(formData.get("year") || ""),
-    url: String(formData.get("url") || ""),
-    abstract: String(formData.get("abstract") || ""),
-    excerpt: String(formData.get("excerpt") || ""),
-    published: asBool(formData.get("published")),
-  });
-
-  if (!parsed.success) adminRedirect("publication-invalid");
-
-  const normalizedAbstract = cleanOptional(parsed.data.abstract);
-  const normalizedExcerpt = cleanOptional(parsed.data.excerpt) || (normalizedAbstract ? makeExcerptFromAbstract(normalizedAbstract) : null);
-
-  await prisma.publication.create({
-    data: {
-      title: parsed.data.title,
-      authors: parsed.data.authors,
-      venue: parsed.data.venue,
-      year: parsed.data.year,
-      url: normalizeUrl(parsed.data.url),
-      abstract: normalizedAbstract,
-      excerpt: normalizedExcerpt,
-      published: parsed.data.published,
-    },
-  });
-
-  revalidatePath("/research");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "publication.create", targetType: "publication", targetId: parsed.data.title });
-  redirect("/admin?panel=research&status=publication-added");
-}
-
-async function updatePublication(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("publication-invalid");
-
-  const parsed = publicationSchema.safeParse({
-    title: String(formData.get("title") || ""),
-    authors: String(formData.get("authors") || ""),
-    venue: String(formData.get("venue") || ""),
-    year: String(formData.get("year") || ""),
-    url: String(formData.get("url") || ""),
-    abstract: String(formData.get("abstract") || ""),
-    excerpt: String(formData.get("excerpt") || ""),
-    published: asBool(formData.get("published")),
-  });
-
-  if (!parsed.success) adminRedirect("publication-invalid");
-
-  const normalizedAbstract = cleanOptional(parsed.data.abstract);
-  const normalizedExcerpt = cleanOptional(parsed.data.excerpt) || (normalizedAbstract ? makeExcerptFromAbstract(normalizedAbstract) : null);
-
-  await prisma.publication.update({
-    where: { id },
-    data: {
-      title: parsed.data.title,
-      authors: parsed.data.authors,
-      venue: parsed.data.venue,
-      year: parsed.data.year,
-      url: normalizeUrl(parsed.data.url),
-      abstract: normalizedAbstract,
-      excerpt: normalizedExcerpt,
-      published: parsed.data.published,
-    },
-  });
-
-  revalidatePath("/research");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "publication.update", targetType: "publication", targetId: id });
-  redirect("/admin?panel=research&status=publication-updated");
-}
-
-async function deletePublication(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("publication-delete-failed");
-
-  await prisma.publication.delete({ where: { id } });
-  revalidatePath("/research");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "publication.delete", targetType: "publication", targetId: id });
-  redirect("/admin?panel=research&status=publication-deleted");
-}
-
 const statusText: Record<string, string> = {
   "settings-saved": "✅ Settings saved",
   "settings-invalid": "⚠️ Settings invalid. Check required fields and URL/email format.",
@@ -983,8 +744,6 @@ const statusText: Record<string, string> = {
   "slug-conflict": "⚠️ Slug already exists. Choose a unique slug.",
   "media-deleted": "✅ Media deleted",
   "media-delete-failed": "⚠️ Media delete failed",
-  "media-profile-updated": "✅ Image moved to profile section",
-  "media-update-failed": "⚠️ Could not update media",
   "avatar-saved": "✅ Profile avatar saved",
   "avatar-cleared": "✅ Profile avatar cleared",
   "publication-added": "✅ Publication added",
@@ -1000,12 +759,13 @@ function badgeTone(published: boolean) {
     : "border-amber-300/40 bg-amber-100 text-amber-700";
 }
 
-function NavIcon({ kind }: { kind: "site" | "projects" | "research" | "blog" | "users" | "security" | "audit" }) {
+function NavIcon({ kind }: { kind: "site" | "about" | "projects" | "research" | "blog" | "users" | "security" | "audit" }) {
   const paths: Record<string, string> = {
     site: "M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z",
     projects: "M4 6h7v7H4zM13 6h7v4h-7zM13 12h7v7h-7zM4 15h7v4H4z",
     blog: "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 4h10M7 12h10M7 16h6",
     research: "M4 5h16v14H4zM8 3v4M16 3v4M7 10h10M7 14h6",
+    about: "M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-7 17a7 7 0 0 1 14 0",
     users: "M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 20a6 6 0 0 1 16 0",
     security: "M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6zM9 12l2 2 4-4",
     audit: "M6 3h9l3 3v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm8 1v3h3",
@@ -1130,7 +890,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           : {}),
   };
 
-  const [settings, projects, posts, publications, adminUsers, auditLogs, me, mediaAssets, legacyMediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
+  const [settings, projects, posts, publications, adminUsers, auditLogs, me, mediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.project.findMany({ where: projectWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.post.findMany({ where: postWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
@@ -1139,7 +899,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
     prisma.mediaAsset.findMany({ where: { kind: "profile" }, orderBy: { createdAt: "desc" }, take: 24 }),
-    prisma.mediaAsset.findMany({ where: { kind: "blog" }, orderBy: { createdAt: "desc" }, take: 24 }),
     prisma.post.count({ where: { deletedAt: null, published: false } }),
     prisma.post.count({ where: { deletedAt: null, published: true } }),
     prisma.post.count({ where: { deletedAt: { not: null, gte: trashRetainFrom } } }),
@@ -1188,6 +947,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="mb-3 flex flex-wrap gap-2 text-xs">
           <a href="/admin?panel=site" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "site" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="site" />Site</a>
           <a href="/admin?panel=projects" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "projects" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="projects" />Projects</a>
+          <a href="/admin?panel=about" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "about" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="about" />About</a>
           <a href="/admin?panel=blog" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "blog" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="blog" />Blog</a>
           <a href="/admin?panel=research" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "research" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="research" />Research</a>
           <a href="/admin?panel=users" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "users" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="users" />Users</a>
@@ -1207,7 +967,31 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
         </aside>
-        {panel === "projects" && (
+        
+      {panel === "about" && (
+      <section id="about-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">About CMS</h2>
+        <p className="mt-1 text-sm text-zinc-500">Manage about page text blocks and CV file.</p>
+
+        <form action={saveSettings} className="mt-4 grid gap-3">
+          <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="About block 1" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="About block 2" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="About block 3" className="min-h-28 rounded-lg border px-3 py-2" />
+
+          <div className="rounded-lg border p-3">
+            <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={(settings as unknown as { cvUrl?: string })?.cvUrl ?? ""} />
+            <CvUploader targetInputId="about-cv-url" />
+            {(settings as unknown as { cvUrl?: string })?.cvUrl && (
+              <a href={(settings as unknown as { cvUrl?: string }).cvUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">Open current CV</a>
+            )}
+          </div>
+
+          <SubmitButton idleText="Save About" pendingText="Saving..." className="btn-primary w-fit" />
+        </form>
+      </section>
+      )}
+
+{panel === "projects" && (
           <form className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto_auto]">
             <input type="hidden" name="panel" value={panel} />
             <input
@@ -1333,7 +1117,31 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </section>
       )}
 
-      {panel === "projects" && (
+      
+      {panel === "about" && (
+      <section id="about-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">About CMS</h2>
+        <p className="mt-1 text-sm text-zinc-500">Manage about page text blocks and CV file.</p>
+
+        <form action={saveSettings} className="mt-4 grid gap-3">
+          <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="About block 1" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="About block 2" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="About block 3" className="min-h-28 rounded-lg border px-3 py-2" />
+
+          <div className="rounded-lg border p-3">
+            <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={(settings as unknown as { cvUrl?: string })?.cvUrl ?? ""} />
+            <CvUploader targetInputId="about-cv-url" />
+            {(settings as unknown as { cvUrl?: string })?.cvUrl && (
+              <a href={(settings as unknown as { cvUrl?: string }).cvUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">Open current CV</a>
+            )}
+          </div>
+
+          <SubmitButton idleText="Save About" pendingText="Saving..." className="btn-primary w-fit" />
+        </form>
+      </section>
+      )}
+
+{panel === "projects" && (
       <section id="projects-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold">Projects CMS</h2>
 

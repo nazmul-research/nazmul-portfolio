@@ -6,7 +6,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const asset = await prisma.mediaAsset.findUnique({ where: { id } });
   if (!asset?.url) return new NextResponse("Not found", { status: 404 });
 
-  const m = asset.url.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  const m = asset.url.match(/^data:([a-zA-Z0-9.+\/-]+);base64,(.+)$/);
   if (!m) return new NextResponse("Invalid media", { status: 400 });
 
   const contentType = m[1];

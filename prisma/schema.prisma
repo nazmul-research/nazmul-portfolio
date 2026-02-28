@@ -33,6 +33,10 @@ model SiteSettings {
   scholarUrl      String?
   researchGateUrl String?
   contactRaw      String?
+  aboutBlock1     String?
+  aboutBlock2     String?
+  aboutBlock3     String?
+  cvUrl           String?
   avatarUrl       String?
   updatedAt       DateTime @updatedAt
 }
