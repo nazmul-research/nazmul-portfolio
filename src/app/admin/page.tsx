@@ -931,6 +931,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const projectSlugs = projects.map((p) => p.slug);
   const postSlugs = posts.map((p) => p.slug);
+  const previewToken = process.env.DRAFT_PREVIEW_TOKEN || "preview-dev-token";
 
 
   return (
@@ -1267,6 +1268,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="flex flex-wrap gap-2 md:col-span-2">
               <button type="submit" name="intent" value="publish" className="btn-primary">Publish post</button>
               <button type="submit" name="intent" value="draft" className="btn-secondary">Save as draft</button>
+              {editPost ? (
+                <a href={`/blog/${editPost.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">Full preview</a>
+              ) : (
+                <span className="btn-secondary cursor-not-allowed opacity-60" title="Save as draft first to enable full preview">Full preview</span>
+              )}
               {editPost && <a href={`/admin?panel=blog&blogView=${blogView === "create" ? "published" : blogView}`} className="btn-secondary">Back to list</a>}
             </div>
           </form>
@@ -1302,7 +1308,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </>
                   ) : (
                     <>
-                      <a href={`/admin?panel=blog&blogView=${p.published ? "published" : "draft"}&editId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
+                      <a href={`/admin?panel=blog&blogView=create&editId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
                       <form action={deletePost}>
                         <input type="hidden" name="id" value={p.id} />
                         <ConfirmSubmitButton idleText="Delete" pendingText="Deleting..." confirmMessage="Move this post to trash?" className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
