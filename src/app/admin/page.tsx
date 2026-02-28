@@ -1214,7 +1214,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <LivePreviewTextarea
             textareaId="create-post-content"
             formId="create-post-form"
-            autosaveKey="writer-create-post-content"
             name="content"
             placeholder="Post content (supports # headings, - bullets, 1. numbered lists, ![alt](url) images, emoji)"
           />
@@ -1223,7 +1222,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Post" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
           </form>
-          <div className="mt-2"><FormDraftAssist formId="create-post-form" storageKey="admin-create-post-draft" /></div>
+          <div className="mt-2"></div>
         </details>
 
         <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">

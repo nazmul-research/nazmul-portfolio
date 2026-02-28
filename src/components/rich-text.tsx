@@ -7,10 +7,39 @@ function isOrderedItem(line: string) {
   return /^\d+\.\s+/.test(line);
 }
 
-function parseImage(line: string) {
+function parseSingleImageLine(line: string) {
   const m = line.trim().match(/^!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^\s)]+)\)$/i);
   if (!m) return null;
   return { alt: m[1] || "inline image", src: m[2] };
+}
+
+function renderInlineMarkdown(line: string, keyPrefix: string) {
+  const regex = /!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^)\s]+)\)/gi;
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let idx = 0;
+
+  while ((m = regex.exec(line))) {
+    if (m.index > last) {
+      parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{line.slice(last, m.index)}</span>);
+    }
+    parts.push(
+      <img
+        key={`${keyPrefix}-i-${idx++}`}
+        src={m[2]}
+        alt={m[1] || "inline image"}
+        className="my-3 w-full rounded-xl border border-white/10 object-cover"
+      />,
+    );
+    last = regex.lastIndex;
+  }
+
+  if (last < line.length) {
+    parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{line.slice(last)}</span>);
+  }
+
+  return parts.length ? parts : line;
 }
 
 export default function RichText({ content, light = false }: Props) {
@@ -29,7 +58,7 @@ export default function RichText({ content, light = false }: Props) {
       continue;
     }
 
-    const img = parseImage(line);
+    const img = parseSingleImageLine(line);
     if (img) {
       blocks.push(
         <div key={`img-${i}`} className="mt-4 overflow-hidden rounded-xl border border-white/10">
@@ -96,7 +125,7 @@ export default function RichText({ content, light = false }: Props) {
 
     blocks.push(
       <p key={`p-${i}`} className={`mt-3 whitespace-pre-wrap leading-7 ${bodyClass}`}>
-        {raw}
+        {renderInlineMarkdown(raw, `p-${i}`)}
       </p>,
     );
     i += 1;
