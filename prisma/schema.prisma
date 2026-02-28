@@ -101,6 +101,7 @@ model LoginThrottle {
 model MediaAsset {
   id        String   @id @default(cuid())
   url       String
+  kind      String   @default("blog")
   createdAt DateTime @default(now())
 }
 

@@ -18,8 +18,23 @@ export default function LivePreviewTextarea({
   formId?: string;
   autosaveKey?: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const initialAutosave = (() => {
+    if (typeof window === "undefined" || !autosaveKey) return { value: defaultValue, ts: null as number | null };
+    try {
+      const raw = localStorage.getItem(autosaveKey);
+      if (!raw) return { value: defaultValue, ts: null as number | null };
+      const parsed = JSON.parse(raw) as { value?: string; ts?: number };
+      return {
+        value: typeof parsed.value === "string" && parsed.value.length > 0 ? parsed.value : defaultValue,
+        ts: typeof parsed.ts === "number" ? parsed.ts : null,
+      };
+    } catch {
+      return { value: defaultValue, ts: null as number | null };
+    }
+  })();
+
+  const [value, setValue] = useState(initialAutosave.value);
+  const [savedAt, setSavedAt] = useState<number | null>(initialAutosave.ts);
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -47,26 +62,13 @@ export default function LivePreviewTextarea({
   async function uploadInlineImage(file: File) {
     const body = new FormData();
     body.append("file", file);
+    body.append("context", "blog");
     const res = await fetch("/api/upload", { method: "POST", body });
     const raw = await res.text();
     const data = raw ? JSON.parse(raw) : {};
     if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
     insert(`\n![inline image](${data.url})\n`);
   }
-
-  useEffect(() => {
-    if (!autosaveKey) return;
-    try {
-      const raw = localStorage.getItem(autosaveKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { value?: string; ts?: number };
-        if (typeof parsed.value === "string" && parsed.value.length > 0) setValue(parsed.value);
-        if (typeof parsed.ts === "number") setSavedAt(parsed.ts);
-      }
-    } catch {
-      // ignore
-    }
-  }, [autosaveKey]);
 
   useEffect(() => {
     if (!autosaveKey) return;

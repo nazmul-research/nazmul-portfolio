@@ -6,6 +6,7 @@ import Cropper, { Area } from "react-easy-crop";
 
 type Props = {
   targetInputId: string;
+  uploadContext?: "profile" | "blog";
 };
 
 function readAsDataUrl(file: File) {
@@ -37,7 +38,7 @@ async function cropToBlob(src: string, pixels: Area): Promise<Blob> {
   return blob;
 }
 
-export default function ImageUploader({ targetInputId }: Props) {
+export default function ImageUploader({ targetInputId, uploadContext = "blog" }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export default function ImageUploader({ targetInputId }: Props) {
       const blob = await cropToBlob(source, cropPixels);
       const body = new FormData();
       body.append("file", new File([blob], "crop.jpg", { type: "image/jpeg" }));
+      body.append("context", uploadContext);
 
       const res = await fetch("/api/upload", { method: "POST", body });
       const raw = await res.text();

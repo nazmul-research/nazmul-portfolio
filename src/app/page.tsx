@@ -28,7 +28,7 @@ export default async function HomePage() {
     take: 3,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
-  const mediaAssets = await prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 24 });
+  const mediaAssets = await prisma.mediaAsset.findMany({ where: { kind: "profile" }, orderBy: { createdAt: "desc" }, take: 24 });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const socials = settings as unknown as {

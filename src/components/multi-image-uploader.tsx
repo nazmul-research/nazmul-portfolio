@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function MultiImageUploader({ targetInputId }: { targetInputId: string }) {
+export default function MultiImageUploader({ targetInputId, uploadContext = "blog" }: { targetInputId: string; uploadContext?: "profile" | "blog" }) {
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +31,7 @@ export default function MultiImageUploader({ targetInputId }: { targetInputId: s
   async function uploadFile(file: File) {
     const body = new FormData();
     body.append("file", file);
+    body.append("context", uploadContext);
     const res = await fetch("/api/upload", { method: "POST", body });
     const data = await res.json();
     if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");

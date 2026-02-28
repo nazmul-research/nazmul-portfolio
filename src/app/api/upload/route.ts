@@ -9,6 +9,8 @@ export async function POST(req: Request) {
 
   const formData = await req.formData();
   const file = formData.get("file");
+  const context = String(formData.get("context") || "blog").trim().toLowerCase();
+  const kind = context === "profile" ? "profile" : "blog";
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
   const base64 = Buffer.from(bytes).toString("base64");
   const dataUrl = `data:${file.type};base64,${base64}`;
 
-  const asset = await prisma.mediaAsset.create({ data: { url: dataUrl } });
+  const asset = await prisma.mediaAsset.create({ data: { url: dataUrl, kind } });
   return NextResponse.json({ id: asset.id, url: `/api/media/${asset.id}`, rawUrl: asset.url });
 }
 

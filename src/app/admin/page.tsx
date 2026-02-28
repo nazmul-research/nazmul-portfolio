@@ -998,7 +998,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
-    prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 24 }),
+    prisma.mediaAsset.findMany({ where: { kind: "profile" }, orderBy: { createdAt: "desc" }, take: 24 }),
     prisma.post.count({ where: { deletedAt: null, published: false } }),
     prisma.post.count({ where: { deletedAt: null, published: true } }),
     prisma.post.count({ where: { deletedAt: { not: null, gte: trashRetainFrom } } }),
@@ -1104,7 +1104,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
               <div className="space-y-2 md:col-span-2">
                 <input id="site-avatar-url" type="hidden" name="avatarUrl" defaultValue={settings?.avatarUrl ?? ""} />
-                <ImageUploader targetInputId="site-avatar-url" />
+                <ImageUploader targetInputId="site-avatar-url" uploadContext="profile" />
                 <UrlImagePreview inputId="site-avatar-url" />
               </div>
               <BioField initial={settings?.bio ?? ""} />
@@ -1346,8 +1346,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="space-y-2 md:col-span-2">
               <input id="post-image-url" type="text" name="imageUrl" defaultValue={editPost?.imageUrl ?? ""} placeholder="Cover image URL or /api/media/..." className="w-full rounded-lg border px-3 py-2" />
               <input id="post-cover-images" type="hidden" name="coverImages" defaultValue={editPost?.coverImages ?? ""} />
-              <ImageUploader targetInputId="post-image-url" />
-              <MultiImageUploader targetInputId="post-cover-images" />
+              <ImageUploader targetInputId="post-image-url" uploadContext="blog" />
+              <MultiImageUploader targetInputId="post-cover-images" uploadContext="blog" />
               <UrlImagePreview inputId="post-image-url" />
             </div>
             <div className="space-y-2 md:col-span-2">
