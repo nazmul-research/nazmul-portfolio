@@ -70,6 +70,7 @@ const projectSchema = z.object({
 
 const postSchema = z.object({
   title: z.string().trim().min(2),
+  writerName: z.string().trim().min(2),
   excerpt: z.string().trim().min(10),
   content: z.string().trim().min(10),
   tags: z.string().trim().optional(),
@@ -442,13 +443,15 @@ async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
 async function createPost(formData: FormData) {
   "use server";
 
+  const intent = String(formData.get("intent") || "");
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
+    writerName: String(formData.get("writerName") || ""),
     excerpt: String(formData.get("excerpt") || ""),
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
     imageUrl: String(formData.get("imageUrl") || ""),
-    published: asBool(formData.get("published")),
+    published: intent === "draft" ? false : true,
     publishAt: String(formData.get("publishAt") || ""),
   });
 
@@ -462,6 +465,7 @@ async function createPost(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug,
+      writerName: parsed.data.writerName,
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
@@ -485,13 +489,15 @@ async function updatePost(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   if (!id) adminRedirect("post-update-failed");
 
+  const intent = String(formData.get("intent") || "");
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
+    writerName: String(formData.get("writerName") || ""),
     excerpt: String(formData.get("excerpt") || ""),
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
     imageUrl: String(formData.get("imageUrl") || ""),
-    published: asBool(formData.get("published")),
+    published: intent === "draft" ? false : true,
     publishAt: String(formData.get("publishAt") || ""),
   });
 
@@ -505,6 +511,7 @@ async function updatePost(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug: nextSlug,
+      writerName: parsed.data.writerName,
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
@@ -562,20 +569,6 @@ async function hardDeletePost(formData: FormData) {
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.delete", targetType: "post", targetId: id });
   adminRedirect("post-deleted");
-}
-
-async function togglePostPublish(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") || "").trim();
-  const published = String(formData.get("published") || "false") === "true";
-  if (!id) adminRedirect("post-toggle-failed");
-
-  await prisma.post.update({ where: { id }, data: { published: !published } });
-  revalidatePath("/");
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: published ? "post.unpublish" : "post.publish", targetType: "post", targetId: id });
-  adminRedirect(published ? "post-unpublished" : "post-published");
 }
 
 async function deleteMediaAsset(formData: FormData) {
@@ -877,6 +870,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...(filter === "draft" ? { published: false } : {}),
   };
 
+  const now = new Date();
+  const trashRetainFrom = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+  await prisma.post.deleteMany({ where: { deletedAt: { not: null, lt: trashRetainFrom } } });
+
   const postWhere = {
     ...(q
       ? {
@@ -890,7 +887,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...(
       panel === "blog"
         ? blogView === "trash"
-          ? { deletedAt: { not: null } }
+          ? { deletedAt: { not: null, gte: trashRetainFrom } }
           : { deletedAt: null }
         : scope === "trash"
           ? { deletedAt: { not: null } }
@@ -931,8 +928,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const projectSlugs = projects.map((p) => p.slug);
   const postSlugs = posts.map((p) => p.slug);
-  const previewToken = process.env.DRAFT_PREVIEW_TOKEN || "preview-dev-token";
-
 
 
   return (
@@ -1240,6 +1235,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               defaultSlug={editPost?.slug ?? ""}
               titleInputId="create-post-form-title"
             />
+            <input name="writerName" defaultValue={editPost?.writerName ?? (session.user?.name ?? "Nazmul")} placeholder="Writer name" className="w-full rounded-lg border px-3 py-2" required />
             <div className="space-y-2">
               <input id="create-post-tags" name="tags" defaultValue={editPost?.tags ?? ""} placeholder="Tags" className="w-full rounded-lg border px-3 py-2" />
               <AutoTagsButton titleInputId="create-post-form-title" contentInputId="create-post-content" tagsInputId="create-post-tags" />
@@ -1263,9 +1259,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             />
             <WriterStatus contentInputId="create-post-content" />
             <PublishChecklist titleId="create-post-form-title" excerptId="create-post-excerpt" tagsId="create-post-tags" contentId="create-post-content" />
-            <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={editPost ? editPost.published : true} /> Published</label>
-            <div className="flex gap-2 md:col-span-2">
-              <SubmitButton idleText={editPost ? "Save Changes" : "Add Post"} pendingText={editPost ? "Saving..." : "Adding..."} className="btn-primary w-fit disabled:opacity-60" />
+            <div className="flex flex-wrap gap-2 md:col-span-2">
+              <button type="submit" name="intent" value="publish" className="btn-primary">Publish post</button>
+              <button type="submit" name="intent" value="draft" className="btn-secondary">Save as draft</button>
               {editPost && <a href={`/admin?panel=blog&blogView=${blogView === "create" ? "published" : blogView}`} className="btn-secondary">Back to list</a>}
             </div>
           </form>
@@ -1277,11 +1273,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             {posts.map((p) => (
               <div key={p.id} className="rounded-xl border border-zinc-200 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{p.title}</span>
-                    <span className={`rounded-full border px-2 py-0.5 text-xs ${badgeTone(p.published)}`}>{p.published ? "Published" : "Draft"}</span>
+                  <div>
+                    <p className="font-semibold">{p.title}</p>
+                    <p className="text-xs text-zinc-500">Publisher: {p.writerName || "Unknown"}</p>
                   </div>
-                  <span className="text-xs text-zinc-500">Updated {new Date(p.updatedAt).toLocaleString()}</span>
+                  {p.deletedAt ? (
+                    <p className="text-xs text-zinc-500">Deleted {new Date(p.deletedAt).toLocaleString()}</p>
+                  ) : (
+                    <p className="text-xs text-zinc-500">Updated {new Date(p.updatedAt).toLocaleString()}</p>
+                  )}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {p.deletedAt ? (
@@ -1298,15 +1298,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   ) : (
                     <>
                       <a href={`/admin?panel=blog&blogView=${p.published ? "published" : "draft"}&editId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
-                      <a href={`/blog/${p.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Preview</a>
-                      <form action={togglePostPublish}>
-                        <input type="hidden" name="id" value={p.id} />
-                        <input type="hidden" name="published" value={String(p.published)} />
-                        <SubmitButton idleText={p.published ? "Move to Draft" : "Publish"} pendingText="Working..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
-                      </form>
                       <form action={deletePost}>
                         <input type="hidden" name="id" value={p.id} />
-                        <ConfirmSubmitButton idleText="Move to Trash" pendingText="Moving..." confirmMessage="Move this post to trash?" className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
+                        <ConfirmSubmitButton idleText="Delete" pendingText="Deleting..." confirmMessage="Move this post to trash?" className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
                       </form>
                     </>
                   )}
