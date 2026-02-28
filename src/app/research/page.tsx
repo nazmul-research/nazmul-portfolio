@@ -22,7 +22,7 @@ export default async function ResearchPage() {
               <p className="text-xs uppercase tracking-wide text-zinc-400">{p.year} • {p.venue}</p>
               <h2 className="mt-1 text-2xl font-semibold text-white">{p.title}</h2>
               <p className="mt-2 text-sm text-zinc-300">{p.authors}</p>
-              {p.abstract && <p className="mt-3 text-sm leading-7 text-zinc-200">{p.abstract}</p>}
+              {p.excerpt && <p className="mt-3 text-sm leading-7 text-zinc-200">{p.excerpt}</p>}
               {p.url && (
                 <a href={p.url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-medium text-white underline">
                   Read publication

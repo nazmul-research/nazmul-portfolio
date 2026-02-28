@@ -19,6 +19,7 @@ import BioField from "@/components/bio-field";
 import { AutoExcerptButton, AutoTagsButton } from "@/components/blog-meta-tools";
 import WriterStatus from "@/components/writer-status";
 import PublishChecklist from "@/components/publish-checklist";
+import PublicationExcerptTool from "@/components/publication-excerpt-tool";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { authenticator } from "otplib";
@@ -89,6 +90,7 @@ const publicationSchema = z.object({
   year: z.coerce.number().int().min(1900).max(2100),
   url: z.string().trim().optional().or(z.literal("")),
   abstract: z.string().trim().optional().or(z.literal("")),
+  excerpt: z.string().trim().optional().or(z.literal("")),
   published: z.boolean(),
 });
 
@@ -178,6 +180,10 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
+
+function makeExcerptFromAbstract(abstract: string) {
+  return abstract.trim().split(/\s+/).filter(Boolean).slice(0, 300).join(" ");
+}
 
 function extractFirstImageFromContent(content: string) {
   const md = content.match(/!\[[^\]]*\]\(([^)\s]+)\)/i);
@@ -894,10 +900,14 @@ async function createPublication(formData: FormData) {
     year: String(formData.get("year") || ""),
     url: String(formData.get("url") || ""),
     abstract: String(formData.get("abstract") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
     published: asBool(formData.get("published")),
   });
 
   if (!parsed.success) adminRedirect("publication-invalid");
+
+  const normalizedAbstract = cleanOptional(parsed.data.abstract);
+  const normalizedExcerpt = cleanOptional(parsed.data.excerpt) || (normalizedAbstract ? makeExcerptFromAbstract(normalizedAbstract) : null);
 
   await prisma.publication.create({
     data: {
@@ -906,7 +916,8 @@ async function createPublication(formData: FormData) {
       venue: parsed.data.venue,
       year: parsed.data.year,
       url: normalizeUrl(parsed.data.url),
-      abstract: cleanOptional(parsed.data.abstract),
+      abstract: normalizedAbstract,
+      excerpt: normalizedExcerpt,
       published: parsed.data.published,
     },
   });
@@ -1601,7 +1612,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <input name="venue" placeholder="Venue / Journal / Conference" className="rounded-lg border px-3 py-2" required />
           <input name="year" type="number" placeholder="Year" className="rounded-lg border px-3 py-2" required />
           <input name="url" type="text" placeholder="Publication URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <textarea name="abstract" placeholder="Short abstract (optional)" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" />
+          <textarea id="publication-abstract" name="abstract" placeholder="Abstract" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" />
+          <textarea id="publication-excerpt" name="excerpt" placeholder="Short excerpt (shown on Research page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
+          <div className="md:col-span-2"><PublicationExcerptTool abstractId="publication-abstract" excerptId="publication-excerpt" /></div>
           <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Publication" pendingText="Adding..." className="btn-primary w-fit" />
         </form>

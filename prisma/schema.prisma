@@ -82,6 +82,7 @@ model Publication {
   year      Int
   url       String?
   abstract  String?
+  excerpt   String?
   published Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
