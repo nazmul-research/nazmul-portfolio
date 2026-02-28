@@ -427,6 +427,18 @@ async function saveProjectSortOrder(formData: FormData) {
   adminRedirect("project-reordered");
 }
 
+async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
+  let candidate = baseSlug;
+  let i = 2;
+
+  while (true) {
+    const found = await prisma.post.findUnique({ where: { slug: candidate } });
+    if (!found || (excludeId && found.id === excludeId)) return candidate;
+    candidate = `${baseSlug}-${i}`;
+    i += 1;
+  }
+}
+
 async function createPost(formData: FormData) {
   "use server";
 
@@ -443,10 +455,8 @@ async function createPost(formData: FormData) {
   if (!parsed.success) adminRedirect("post-invalid");
 
   const slugInput = slugify(String(formData.get("slug") || ""));
-  const slug = slugInput || `${slugify(parsed.data.title)}-${Math.floor(Math.random() * 9999)}`;
-
-  const existingSlug = await prisma.post.findUnique({ where: { slug } });
-  if (existingSlug) adminRedirect("slug-conflict");
+  const slugBase = slugInput || slugify(parsed.data.title) || `post-${Math.floor(Math.random() * 9999)}`;
+  const slug = await ensureUniquePostSlug(slugBase);
 
   await prisma.post.create({
     data: {
@@ -488,16 +498,13 @@ async function updatePost(formData: FormData) {
   if (!parsed.success) adminRedirect("post-invalid");
 
   const slugInput = slugify(String(formData.get("slug") || ""));
-  if (slugInput) {
-    const existingSlug = await prisma.post.findUnique({ where: { slug: slugInput } });
-    if (existingSlug && existingSlug.id !== id) adminRedirect("slug-conflict");
-  }
+  const nextSlug = slugInput ? await ensureUniquePostSlug(slugInput, id) : undefined;
 
   await prisma.post.update({
     where: { id },
     data: {
       title: parsed.data.title,
-      slug: slugInput || undefined,
+      slug: nextSlug,
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
