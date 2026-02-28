@@ -1003,6 +1003,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const filter = typeof resolvedParams.filter === "string" ? resolvedParams.filter : "all";
   const scope = typeof resolvedParams.scope === "string" ? resolvedParams.scope : "active";
   const panel = typeof resolvedParams.panel === "string" ? resolvedParams.panel : "site";
+  const editProjectId = typeof resolvedParams.editProjectId === "string" ? resolvedParams.editProjectId : "";
   const rawBlogView = typeof resolvedParams.blogView === "string" ? resolvedParams.blogView : "create";
   const blogView = ["create", "draft", "published", "trash"].includes(rawBlogView) ? rawBlogView : "create";
   const editId = typeof resolvedParams.editId === "string" ? resolvedParams.editId : "";
@@ -1332,7 +1333,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
           {projects.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">🧩 No projects match current filter.</div>}
           {projects.map((p) => (
-            <details key={p.id} className="rounded-xl border border-zinc-200 p-4" open={false}>
+            <details key={p.id} className="rounded-xl border border-zinc-200 p-4" open={editProjectId === p.id}>
               <summary className="flex cursor-pointer items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{p.title}</span>
@@ -1340,6 +1341,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   {p.featured && <span className="rounded-full border border-indigo-300/40 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">Featured</span>}
                 </div>
                 <div className="flex items-center gap-2">
+                  <a href={`/admin?panel=projects&editProjectId=${p.id}`} className="rounded border px-2 py-1 text-xs">Edit</a>
                   <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded border px-2 py-1 text-xs">Open</a>
                   {!p.deletedAt && (
                     <form action={deleteProject}>
