@@ -82,6 +82,16 @@ const postSchema = z.object({
   publishAt: z.string().optional().or(z.literal("")),
 });
 
+const publicationSchema = z.object({
+  title: z.string().trim().min(3),
+  authors: z.string().trim().min(3),
+  venue: z.string().trim().min(2),
+  year: z.coerce.number().int().min(1900).max(2100),
+  url: z.string().trim().optional().or(z.literal("")),
+  abstract: z.string().trim().optional().or(z.literal("")),
+  published: z.boolean(),
+});
+
 function cleanOptional(value: string | null | undefined) {
   const str = String(value || "").trim();
   return str || null;
@@ -874,6 +884,51 @@ async function regenerateRecoveryCodes(formData: FormData) {
   redirect(`/admin?status=recovery-codes-regenerated&codes=${encoded}`);
 }
 
+async function createPublication(formData: FormData) {
+  "use server";
+
+  const parsed = publicationSchema.safeParse({
+    title: String(formData.get("title") || ""),
+    authors: String(formData.get("authors") || ""),
+    venue: String(formData.get("venue") || ""),
+    year: String(formData.get("year") || ""),
+    url: String(formData.get("url") || ""),
+    abstract: String(formData.get("abstract") || ""),
+    published: asBool(formData.get("published")),
+  });
+
+  if (!parsed.success) adminRedirect("publication-invalid");
+
+  await prisma.publication.create({
+    data: {
+      title: parsed.data.title,
+      authors: parsed.data.authors,
+      venue: parsed.data.venue,
+      year: parsed.data.year,
+      url: normalizeUrl(parsed.data.url),
+      abstract: cleanOptional(parsed.data.abstract),
+      published: parsed.data.published,
+    },
+  });
+
+  revalidatePath("/research");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "publication.create", targetType: "publication", targetId: parsed.data.title });
+  redirect("/admin?panel=research&status=publication-added");
+}
+
+async function deletePublication(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") || "").trim();
+  if (!id) adminRedirect("publication-delete-failed");
+
+  await prisma.publication.delete({ where: { id } });
+  revalidatePath("/research");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "publication.delete", targetType: "publication", targetId: id });
+  redirect("/admin?panel=research&status=publication-deleted");
+}
+
 const statusText: Record<string, string> = {
   "settings-saved": "✅ Settings saved",
   "settings-invalid": "⚠️ Settings invalid. Check required fields and URL/email format.",
@@ -913,7 +968,11 @@ const statusText: Record<string, string> = {
   "media-profile-updated": "✅ Image moved to profile section",
   "media-update-failed": "⚠️ Could not update media",
   "avatar-saved": "✅ Profile avatar saved",
-  "avatar-cleared": "✅ Profile avatar cleared", 
+  "avatar-cleared": "✅ Profile avatar cleared",
+  "publication-added": "✅ Publication added",
+  "publication-deleted": "✅ Publication deleted",
+  "publication-invalid": "⚠️ Publication form invalid",
+  "publication-delete-failed": "⚠️ Could not delete publication", 
 };
 
 function badgeTone(published: boolean) {
@@ -922,11 +981,12 @@ function badgeTone(published: boolean) {
     : "border-amber-300/40 bg-amber-100 text-amber-700";
 }
 
-function NavIcon({ kind }: { kind: "site" | "projects" | "blog" | "users" | "security" | "audit" }) {
+function NavIcon({ kind }: { kind: "site" | "projects" | "research" | "blog" | "users" | "security" | "audit" }) {
   const paths: Record<string, string> = {
     site: "M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z",
     projects: "M4 6h7v7H4zM13 6h7v4h-7zM13 12h7v7h-7zM4 15h7v4H4z",
     blog: "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 4h10M7 12h10M7 16h6",
+    research: "M4 5h16v14H4zM8 3v4M16 3v4M7 10h10M7 14h6",
     users: "M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 20a6 6 0 0 1 16 0",
     security: "M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6zM9 12l2 2 4-4",
     audit: "M6 3h9l3 3v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm8 1v3h3",
@@ -1049,10 +1109,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           : {}),
   };
 
-  const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets, legacyMediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
+  const [settings, projects, posts, publications, adminUsers, auditLogs, me, mediaAssets, legacyMediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.project.findMany({ where: projectWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.post.findMany({ where: postWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
+    prisma.publication.findMany({ orderBy: [{ year: "desc" }, { createdAt: "desc" }], take: 200 }),
     prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
@@ -1099,6 +1160,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <a href="/admin?panel=site" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "site" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="site" />Site</a>
           <a href="/admin?panel=projects" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "projects" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="projects" />Projects</a>
           <a href="/admin?panel=blog" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "blog" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="blog" />Blog</a>
+          <a href="/admin?panel=research" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "research" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="research" />Research</a>
           <a href="/admin?panel=users" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "users" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="users" />Users</a>
           <a href="/admin?panel=security" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "security" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="security" />Security</a>
           <a href="/admin?panel=audit" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "audit" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="audit" />Audit</a>
@@ -1524,6 +1586,43 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ))}
           </div>
         )}
+      </section>
+      )}
+
+
+      {panel === "research" && (
+      <section id="research-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">Research Publications</h2>
+        <p className="mt-1 text-sm text-zinc-500">Add or delete publications for the public research page.</p>
+
+        <form action={createPublication} className="mt-4 grid gap-3 md:grid-cols-2">
+          <input name="title" placeholder="Publication title" className="rounded-lg border px-3 py-2 md:col-span-2" required />
+          <input name="authors" placeholder="Authors" className="rounded-lg border px-3 py-2 md:col-span-2" required />
+          <input name="venue" placeholder="Venue / Journal / Conference" className="rounded-lg border px-3 py-2" required />
+          <input name="year" type="number" placeholder="Year" className="rounded-lg border px-3 py-2" required />
+          <input name="url" type="text" placeholder="Publication URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
+          <textarea name="abstract" placeholder="Short abstract (optional)" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" />
+          <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
+          <SubmitButton idleText="Add Publication" pendingText="Adding..." className="btn-primary w-fit" />
+        </form>
+
+        <div className="mt-6 space-y-3">
+          {publications.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">No publications yet.</div>}
+          {publications.map((pub) => (
+            <div key={pub.id} className="rounded-xl border border-zinc-200 p-4">
+              <p className="font-semibold">{pub.title}</p>
+              <p className="text-sm text-zinc-600">{pub.authors}</p>
+              <p className="text-xs text-zinc-500">{pub.venue} • {pub.year}</p>
+              <div className="mt-2 flex gap-2">
+                {pub.url && <a href={pub.url} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Open</a>}
+                <form action={deletePublication}>
+                  <input type="hidden" name="id" value={pub.id} />
+                  <ConfirmSubmitButton idleText="Delete" pendingText="Deleting..." confirmMessage="Delete this publication?" className="btn-danger" />
+                </form>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
       )}
 

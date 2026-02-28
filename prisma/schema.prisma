@@ -74,6 +74,20 @@ model Post {
   updatedAt     DateTime  @updatedAt
 }
 
+model Publication {
+  id        String   @id @default(cuid())
+  title     String
+  authors   String
+  venue     String
+  year      Int
+  url       String?
+  abstract  String?
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model AdminUser {
   id                String   @id @default(cuid())
   email             String   @unique
