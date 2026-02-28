@@ -1300,7 +1300,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <SubmitButton idleText="Delete current profile image" pendingText="Deleting..." className="btn-danger" />
             </form>
 
-            {mediaAssets.length === 0 && legacyMediaAssets.length === 0 ? (
+            {mediaAssets.length === 0 ? (
               <div className="rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use Profile uploader to add profile images.</div>
             ) : (
               <div className="space-y-4">
@@ -1322,29 +1322,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   </div>
                 )}
 
-                {legacyMediaAssets.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-xs font-semibold text-zinc-600">Blog images (you can move any to profile)</p>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {legacyMediaAssets.map((asset) => (
-                        <div key={asset.id} className="rounded-lg border p-2">
-                          <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
-                          <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
-                          <div className="mt-2 flex gap-2">
-                            <form action={markMediaAsProfile}>
-                              <input type="hidden" name="id" value={asset.id} />
-                              <SubmitButton idleText="Use in Profile" pendingText="Moving..." className="rounded border px-2 py-1 text-xs" />
-                            </form>
-                            <form action={deleteMediaAsset}>
-                              <input type="hidden" name="id" value={asset.id} />
-                              <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
-                            </form>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                
               </div>
             )}
             <div className="mt-3">
