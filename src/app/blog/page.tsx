@@ -98,7 +98,7 @@ export default async function BlogPage({
   return (
     <main id="main-content" className="fade-up mx-auto max-w-5xl px-6 py-12">
       <h1 className="display-font title-underline text-4xl font-extrabold tracking-tight text-white">Writing</h1>
-      <p className="mt-2 text-zinc-300">Thoughts on AI systems, robotics, and practical engineering.</p>
+      <p className="mt-2 text-zinc-300">Personal updates, technical rabbit holes, and practical reflections from a life happily entangled with code, circuits, and the occasional existential chat with a machine.</p>
 
       <form className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3 md:grid-cols-[1fr_auto_auto_auto_auto]">
         <input name="q" defaultValue={q} placeholder="Search by title, writer, excerpt..." className="rounded-lg border border-white/15 bg-black/20 px-3 py-2 text-sm text-white" />
