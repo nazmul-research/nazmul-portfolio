@@ -25,6 +25,7 @@ model SiteSettings {
   bio             String
   location        String?
   email           String?
+  cellNo          String?
   linkedinUrl     String?
   githubUrl       String?
   githubUrl2      String?

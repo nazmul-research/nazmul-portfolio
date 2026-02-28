@@ -10,7 +10,7 @@ function toHref(label: string, value: string) {
   if (!v) return undefined;
   if (v.startsWith("http://") || v.startsWith("https://") || v.startsWith("mailto:") || v.startsWith("tel:")) return v;
   if (l.includes("email")) return `mailto:${v}`;
-  if (l.includes("phone") || l.includes("mobile")) return `tel:${v.replace(/\s+/g, "")}`;
+  if (l.includes("phone") || l.includes("mobile") || l.includes("cell")) return `tel:${v.replace(/\s+/g, "")}`;
   if (l.includes("whatsapp")) return v.startsWith("+") ? `https://wa.me/${v.replace(/[^\d]/g, "")}` : `https://wa.me/${v.replace(/[^\d]/g, "")}`;
   if (v.includes(".")) return `https://${v}`;
   return undefined;
@@ -19,7 +19,7 @@ function toHref(label: string, value: string) {
 function iconFor(label: string, value: string) {
   const t = `${label} ${value}`.toLowerCase();
   if (t.includes("email")) return "✉️";
-  if (t.includes("phone") || t.includes("mobile")) return "📞";
+  if (t.includes("phone") || t.includes("mobile") || t.includes("cell")) return "📞";
   if (t.includes("whatsapp")) return "💬";
   if (t.includes("linkedin")) return "🔗";
   if (t.includes("github")) return "💻";
@@ -45,6 +45,7 @@ function parseContact(raw: string | null | undefined, fallback: Record<string, s
 
   const map: Array<[string, string | null | undefined]> = [
     ["Email", fallback.email],
+    ["Cell no", fallback.cellNo],
     ["WhatsApp", fallback.whatsappUrl],
     ["LinkedIn", fallback.linkedinUrl],
     ["GitHub", fallback.githubUrl],
@@ -65,6 +66,7 @@ export default async function ContactPage() {
   const settings = await prisma.siteSettings.findUnique({ where: { id: "main" } });
   const items = parseContact((settings as unknown as { contactRaw?: string } | null)?.contactRaw, {
     email: settings?.email,
+    cellNo: (settings as unknown as { cellNo?: string } | null)?.cellNo,
     whatsappUrl: (settings as unknown as { whatsappUrl?: string } | null)?.whatsappUrl,
     linkedinUrl: settings?.linkedinUrl,
     githubUrl: settings?.githubUrl,
