@@ -135,6 +135,11 @@ function adminRedirect(status: string): never {
   redirect(`/admin?status=${status}`);
 }
 
+function blogRedirect(status: string, blogView: string): never {
+  const safeView = ["create", "draft", "published", "trash"].includes(blogView) ? blogView : "create";
+  redirect(`/admin?panel=blog&blogView=${safeView}&status=${status}`);
+}
+
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
@@ -484,7 +489,7 @@ async function createPost(formData: FormData) {
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.create", targetType: "post", targetId: slug });
-  redirect(`/admin?panel=blog&blogView=${publishRequested ? "published" : "draft"}&status=post-added`);
+  blogRedirect("post-added", publishRequested ? "published" : "draft");
 }
 
 async function updatePost(formData: FormData) {
@@ -532,50 +537,51 @@ async function updatePost(formData: FormData) {
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.update", targetType: "post", targetId: id });
-  redirect(`/admin?panel=blog&blogView=${publishRequested ? "published" : "draft"}&status=post-updated`);
+  blogRedirect("post-updated", publishRequested ? "published" : "draft");
 }
 
 async function deletePost(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("post-delete-failed");
+  const fromView = String(formData.get("fromView") || "draft");
+  if (!id) blogRedirect("post-delete-failed", fromView);
 
   await prisma.post.update({ where: { id }, data: { deletedAt: new Date() } });
   revalidatePath("/");
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.trash", targetType: "post", targetId: id });
-  adminRedirect("post-trashed");
+  blogRedirect("post-trashed", "trash");
 }
 
 async function restorePost(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("post-restore-failed");
+  if (!id) blogRedirect("post-restore-failed", "trash");
 
   await prisma.post.update({ where: { id }, data: { deletedAt: null } });
   revalidatePath("/");
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.restore", targetType: "post", targetId: id });
-  adminRedirect("post-restored");
+  blogRedirect("post-restored", "draft");
 }
 
 async function hardDeletePost(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+  if (!session?.user || role !== "owner") blogRedirect("admin-forbidden", "trash");
 
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("post-delete-failed");
+  if (!id) blogRedirect("post-delete-failed", "trash");
 
   await prisma.post.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.delete", targetType: "post", targetId: id });
-  adminRedirect("post-deleted");
+  blogRedirect("post-deleted", "trash");
 }
 
 async function deleteMediaAsset(formData: FormData) {
@@ -953,7 +959,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </form>
       </header>
 
-      {status && statusText[status] && (
+      {status && statusText[status] && !(panel === "blog" && ["post-added", "post-updated", "post-trashed", "post-restored", "post-deleted"].includes(status)) && (
         <div className="rounded-xl border border-emerald-300/40 bg-emerald-100 px-4 py-3 text-sm text-emerald-900 shadow-sm">{statusText[status]}</div>
       )}
 
@@ -1211,6 +1217,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       {panel === "blog" && (
       <section id="blog-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">Blog CMS</h2>
+        {status && ["post-added", "post-updated", "post-trashed", "post-restored", "post-deleted"].includes(status) && (
+          <div className="mt-3 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
+            {statusText[status]}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-2 text-sm">
           <a href="/admin?panel=blog&blogView=create" className={`rounded border px-3 py-1.5 ${blogView === "create" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Create blog post</a>
@@ -1324,6 +1335,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       <a href={`/admin?panel=blog&blogView=create&editId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
                       <form action={deletePost}>
                         <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="fromView" value={blogView} />
                         <ConfirmSubmitButton idleText="Delete" pendingText="Deleting..." confirmMessage="Move this post to trash?" className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
                       </form>
                     </>
