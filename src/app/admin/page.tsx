@@ -71,6 +71,7 @@ const projectSchema = z.object({
 const postSchema = z.object({
   title: z.string().trim().min(2),
   writerName: z.string().trim().min(2),
+  category: z.enum(["personal", "technical"]),
   excerpt: z.string().trim().min(10),
   content: z.string().trim().min(10),
   tags: z.string().trim().optional(),
@@ -448,6 +449,7 @@ async function createPost(formData: FormData) {
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
+    category: String(formData.get("category") || "technical"),
     excerpt: String(formData.get("excerpt") || ""),
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
@@ -467,6 +469,7 @@ async function createPost(formData: FormData) {
       title: parsed.data.title,
       slug,
       writerName: parsed.data.writerName,
+      category: parsed.data.category,
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
@@ -495,6 +498,7 @@ async function updatePost(formData: FormData) {
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
+    category: String(formData.get("category") || "technical"),
     excerpt: String(formData.get("excerpt") || ""),
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
@@ -514,6 +518,7 @@ async function updatePost(formData: FormData) {
       title: parsed.data.title,
       slug: nextSlug,
       writerName: parsed.data.writerName,
+      category: parsed.data.category,
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
@@ -1244,6 +1249,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="max-w-xs">
               <input name="writerName" defaultValue={editPost?.writerName ?? ""} placeholder="Writer name" className="w-full rounded-lg border px-3 py-2 text-sm" required />
             </div>
+            <div className="max-w-xs">
+              <select name="category" defaultValue={editPost?.category ?? "technical"} className="w-full rounded-lg border px-3 py-2 text-sm" required>
+                <option value="technical">Technical</option>
+                <option value="personal">Personal</option>
+              </select>
+            </div>
             <div className="space-y-2">
               <input id="create-post-tags" name="tags" defaultValue={editPost?.tags ?? ""} placeholder="Tags" className="w-full rounded-lg border px-3 py-2" />
               <AutoTagsButton titleInputId="create-post-form-title" contentInputId="create-post-content" tagsInputId="create-post-tags" />
@@ -1288,7 +1299,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">{p.title}</p>
-                    <p className="text-xs text-zinc-500">Writer: {p.writerName || "Not set"}</p>
+                    <p className="text-xs text-zinc-500">Writer: {p.writerName || "Not set"} • Category: {p.category || "technical"}</p>
                   </div>
                   {p.deletedAt ? (
                     <p className="text-xs text-zinc-500">Deleted {new Date(p.deletedAt).toLocaleString()}</p>

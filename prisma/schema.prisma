@@ -60,6 +60,7 @@ model Post {
   title         String
   slug          String    @unique
   writerName    String?
+  category      String    @default("technical")
   excerpt       String
   content       String
   tags          String?
