@@ -449,9 +449,8 @@ async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
 async function createPost(formData: FormData) {
   "use server";
 
-  const intents = formData.getAll("intent").map((v) => String(v));
-  const intent = intents[intents.length - 1] || "";
-  const publishRequested = intent === "publish";
+  const publishedValues = formData.getAll("published").map((v) => String(v));
+  const publishRequested = publishedValues[publishedValues.length - 1] === "true";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
@@ -499,9 +498,8 @@ async function updatePost(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   if (!id) adminRedirect("post-update-failed");
 
-  const intents = formData.getAll("intent").map((v) => String(v));
-  const intent = intents[intents.length - 1] || "";
-  const publishRequested = intent === "publish";
+  const publishedValues = formData.getAll("published").map((v) => String(v));
+  const publishRequested = publishedValues[publishedValues.length - 1] === "true";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
@@ -1251,6 +1249,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
           <form id="create-post-form" action={editPost ? updatePost : createPost} className="mt-3 grid gap-3 md:grid-cols-2">
             {editPost && <input type="hidden" name="id" value={editPost.id} />}
+            <input type="hidden" name="published" value={editPost?.published ? "true" : "false"} />
             <SlugHelper
               titleName="title"
               slugName="slug"
@@ -1292,8 +1291,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <WriterStatus contentInputId="create-post-content" />
             <PublishChecklist titleId="create-post-form-title" excerptId="create-post-excerpt" tagsId="create-post-tags" contentId="create-post-content" />
             <div className="flex flex-wrap gap-2 md:col-span-2">
-              <button type="submit" name="intent" value="publish" className="btn-primary">Publish post</button>
-              <button type="submit" name="intent" value="draft" className="btn-secondary">Save as draft</button>
+              <button type="submit" name="published" value="true" className="btn-primary">Publish post</button>
+              <button type="submit" name="published" value="false" className="btn-secondary">Save as draft</button>
               {editPost ? (
                 <a href={`/blog/${editPost.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">Full preview</a>
               ) : (
