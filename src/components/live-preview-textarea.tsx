@@ -30,6 +30,12 @@ export default function LivePreviewTextarea({
     });
   }
 
+  function insertImageMarkdown() {
+    const url = window.prompt("Paste image URL for inline post image:", "https://");
+    if (!url) return;
+    insert(`\n![inline image](${url})\n`);
+  }
+
   return (
     <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
       <div>
@@ -39,6 +45,10 @@ export default function LivePreviewTextarea({
           <button type="button" onClick={() => insert("- Bullet item\n")} className="rounded border px-2 py-1">• List</button>
           <button type="button" onClick={() => insert("1. Numbered item\n")} className="rounded border px-2 py-1">1. List</button>
           <button type="button" onClick={() => insert("\n> Quote\n")} className="rounded border px-2 py-1">Quote</button>
+          <button type="button" onClick={insertImageMarkdown} className="rounded border px-2 py-1">Inline Image</button>
+          <button type="button" onClick={() => insert("🔥")} className="rounded border px-2 py-1">🔥</button>
+          <button type="button" onClick={() => insert("🚀")} className="rounded border px-2 py-1">🚀</button>
+          <button type="button" onClick={() => insert("🧠")} className="rounded border px-2 py-1">🧠</button>
         </div>
         <textarea
           id={textareaId}

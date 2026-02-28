@@ -7,6 +7,12 @@ function isOrderedItem(line: string) {
   return /^\d+\.\s+/.test(line);
 }
 
+function parseImage(line: string) {
+  const m = line.match(/^!\[(.*?)\]\((https?:\/\/[^\s)]+|data:image\/[^)]+)\)$/i);
+  if (!m) return null;
+  return { alt: m[1] || "inline image", src: m[2] };
+}
+
 export default function RichText({ content, light = false }: Props) {
   const lines = content.split(/\r?\n/);
   const headingClass = light ? "text-zinc-900" : "text-white";
@@ -19,6 +25,17 @@ export default function RichText({ content, light = false }: Props) {
     const line = raw.trim();
 
     if (!line) {
+      i += 1;
+      continue;
+    }
+
+    const img = parseImage(line);
+    if (img) {
+      blocks.push(
+        <div key={`img-${i}`} className="mt-4 overflow-hidden rounded-xl border border-white/10">
+          <img src={img.src} alt={img.alt} className="w-full object-cover" />
+        </div>,
+      );
       i += 1;
       continue;
     }

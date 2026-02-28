@@ -6,7 +6,7 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
-export default function SlugHelper({ titleName, slugName, defaultTitle = "", defaultSlug = "", taken = [] }: { titleName: string; slugName: string; defaultTitle?: string; defaultSlug?: string; taken?: string[] }) {
+export default function SlugHelper({ titleName, slugName, defaultTitle = "", defaultSlug = "", taken = [], titleInputId }: { titleName: string; slugName: string; defaultTitle?: string; defaultSlug?: string; taken?: string[]; titleInputId?: string }) {
   const [title, setTitle] = useState(defaultTitle);
   const [manualSlug, setManualSlug] = useState(defaultSlug);
   const [override, setOverride] = useState(Boolean(defaultSlug));
@@ -19,6 +19,7 @@ export default function SlugHelper({ titleName, slugName, defaultTitle = "", def
     <div className="space-y-2 md:col-span-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
       <label className="block text-xs font-medium text-zinc-600">Title</label>
       <input
+        id={titleInputId}
         name={titleName}
         value={title}
         onChange={(e) => setTitle(e.target.value)}

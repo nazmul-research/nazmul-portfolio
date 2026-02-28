@@ -15,6 +15,7 @@ import LivePreviewTextarea from "@/components/live-preview-textarea";
 import UrlImagePreview from "@/components/url-image-preview";
 import SlugHelper from "@/components/slug-helper";
 import BioField from "@/components/bio-field";
+import BlogMetaTools from "@/components/blog-meta-tools";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { authenticator } from "otplib";
@@ -1193,16 +1194,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <details className="rounded-xl border border-zinc-200 p-4" open>
           <summary className="cursor-pointer text-sm font-medium">Create blog post</summary>
           <form id="create-post-form" action={createPost} className="mt-3 grid gap-3 md:grid-cols-2">
-          <SlugHelper titleName="title" slugName="slug" taken={postSlugs} />
-          <input name="tags" placeholder="Tags" className="rounded-lg border px-3 py-2" />
+          <SlugHelper titleName="title" slugName="slug" taken={postSlugs} titleInputId="create-post-form-title" />
+          <input id="create-post-tags" name="tags" placeholder="Tags" className="rounded-lg border px-3 py-2" />
           <div className="space-y-2 md:col-span-2">
             <input id="new-post-image-url" type="url" name="imageUrl" placeholder="Cover image URL" className="w-full rounded-lg border px-3 py-2" />
             <ImageUploader targetInputId="new-post-image-url" />
             <UrlImagePreview inputId="new-post-image-url" />
           </div>
-          <input name="excerpt" placeholder="Excerpt" className="rounded-lg border px-3 py-2 md:col-span-2" required />
+          <input id="create-post-excerpt" name="excerpt" placeholder="Excerpt" className="rounded-lg border px-3 py-2 md:col-span-2" required />
+          <BlogMetaTools titleInputId="create-post-form-title" contentInputId="create-post-content" excerptInputId="create-post-excerpt" tagsInputId="create-post-tags" />
           <input type="datetime-local" name="publishAt" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <LivePreviewTextarea name="content" placeholder="Post content (supports # headings, - bullets, 1. numbered lists)" />
+          <LivePreviewTextarea textareaId="create-post-content" name="content" placeholder="Post content (supports # headings, - bullets, 1. numbered lists, ![alt](url) images, emoji)" />
           <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Post" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
           </form>
@@ -1231,16 +1233,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
               <form action={updatePost} className="mt-4 grid gap-3 md:grid-cols-2">
                 <input type="hidden" name="id" value={p.id} />
-                <SlugHelper titleName="title" slugName="slug" defaultTitle={p.title} defaultSlug={p.slug} taken={postSlugs} />
-                <input name="tags" defaultValue={p.tags ?? ""} className="rounded-lg border px-3 py-2" />
+                <SlugHelper titleName="title" slugName="slug" defaultTitle={p.title} defaultSlug={p.slug} taken={postSlugs} titleInputId={`edit-post-title-${p.id}`} />
+                <input id={`edit-post-tags-${p.id}`} name="tags" defaultValue={p.tags ?? ""} className="rounded-lg border px-3 py-2" />
                 <div className="space-y-2 md:col-span-2">
                   <input id={`post-image-url-${p.id}`} type="url" name="imageUrl" defaultValue={p.imageUrl ?? ""} className="w-full rounded-lg border px-3 py-2" />
                   <ImageUploader targetInputId={`post-image-url-${p.id}`} />
                   <UrlImagePreview inputId={`post-image-url-${p.id}`} />
                 </div>
-                <input name="excerpt" defaultValue={p.excerpt} className="rounded-lg border px-3 py-2 md:col-span-2" required />
+                <input id={`edit-post-excerpt-${p.id}`} name="excerpt" defaultValue={p.excerpt} className="rounded-lg border px-3 py-2 md:col-span-2" required />
+                <BlogMetaTools titleInputId={`edit-post-title-${p.id}`} contentInputId={`edit-post-content-${p.id}`} excerptInputId={`edit-post-excerpt-${p.id}`} tagsInputId={`edit-post-tags-${p.id}`} />
                 <input type="datetime-local" name="publishAt" defaultValue={p.publishAt ? new Date(p.publishAt).toISOString().slice(0, 16) : ""} className="rounded-lg border px-3 py-2 md:col-span-2" />
-                <textarea name="content" defaultValue={p.content} className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" required />
+                <LivePreviewTextarea textareaId={`edit-post-content-${p.id}`} name="content" defaultValue={p.content} placeholder="Post content (supports # headings, lists, ![alt](url), emoji)" />
                 <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
                 <div className="flex flex-wrap gap-2 md:col-span-2">
                   <SubmitButton idleText="Save Changes" pendingText="Saving..." className="btn-primary disabled:opacity-60" />
