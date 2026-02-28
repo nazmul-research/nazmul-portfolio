@@ -3,6 +3,10 @@ type Props = {
   light?: boolean;
 };
 
+function headingId(text: string) {
+  return text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+}
+
 function isOrderedItem(line: string) {
   return /^\d+\.\s+/.test(line);
 }
@@ -101,19 +105,22 @@ export default function RichText({ content, light = false }: Props) {
     }
 
     if (line.startsWith("### ")) {
-      blocks.push(<h3 key={`h3-${i}`} className={`mt-5 text-xl font-semibold ${headingClass}`}>{line.slice(4)}</h3>);
+      const text = line.slice(4);
+      blocks.push(<h3 id={headingId(text)} key={`h3-${i}`} className={`mt-5 scroll-mt-24 text-xl font-semibold ${headingClass}`}>{text}</h3>);
       i += 1;
       continue;
     }
 
     if (line.startsWith("## ")) {
-      blocks.push(<h2 key={`h2-${i}`} className={`mt-6 text-2xl font-semibold ${headingClass}`}>{line.slice(3)}</h2>);
+      const text = line.slice(3);
+      blocks.push(<h2 id={headingId(text)} key={`h2-${i}`} className={`mt-6 scroll-mt-24 text-2xl font-semibold ${headingClass}`}>{text}</h2>);
       i += 1;
       continue;
     }
 
     if (line.startsWith("# ")) {
-      blocks.push(<h1 key={`h1-${i}`} className={`mt-6 text-3xl font-bold ${headingClass}`}>{line.slice(2)}</h1>);
+      const text = line.slice(2);
+      blocks.push(<h1 id={headingId(text)} key={`h1-${i}`} className={`mt-6 scroll-mt-24 text-3xl font-bold ${headingClass}`}>{text}</h1>);
       i += 1;
       continue;
     }

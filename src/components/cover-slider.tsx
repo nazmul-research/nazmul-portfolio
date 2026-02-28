@@ -1,8 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
-export default function CoverSlider({ images, alt }: { images: string[]; alt: string }) {
+export default function CoverSlider({
+  images,
+  alt,
+  className = "",
+  imageClassName = "h-72 w-full object-cover md:h-96",
+  overlay,
+}: {
+  images: string[];
+  alt: string;
+  className?: string;
+  imageClassName?: string;
+  overlay?: ReactNode;
+}) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -14,8 +26,9 @@ export default function CoverSlider({ images, alt }: { images: string[]; alt: st
   if (!images.length) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-lg">
-      <img src={images[idx]} alt={alt} className="h-72 w-full object-cover md:h-96" />
+    <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-lg ${className}`}>
+      <img src={images[idx]} alt={alt} className={`${imageClassName} transition-all duration-500`} />
+      {overlay}
       {images.length > 1 && (
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/35 px-2 py-1">
           {images.map((_, i) => (

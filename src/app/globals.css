@@ -196,3 +196,22 @@ h1,h2,h3,.display-font {
   align-items: center;
   gap: .35rem;
 }
+
+.excerpt-fade {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  position: relative;
+}
+
+.excerpt-fade::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.2rem;
+  background: linear-gradient(to bottom, rgba(11,13,18,0), rgba(11,13,18,0.9));
+  pointer-events: none;
+}
