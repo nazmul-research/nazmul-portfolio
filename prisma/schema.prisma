@@ -31,6 +31,7 @@ model SiteSettings {
   whatsappUrl     String?
   scholarUrl      String?
   researchGateUrl String?
+  contactRaw      String?
   avatarUrl       String?
   updatedAt       DateTime @updatedAt
 }

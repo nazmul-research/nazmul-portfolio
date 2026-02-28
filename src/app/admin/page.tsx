@@ -52,6 +52,7 @@ const siteSettingsSchema = z.object({
   whatsappUrl: z.string().trim().optional().or(z.literal("")),
   scholarUrl: z.string().trim().optional().or(z.literal("")),
   researchGateUrl: z.string().trim().optional().or(z.literal("")),
+  contactRaw: z.string().trim().optional().or(z.literal("")),
   avatarUrl: z.string().trim().optional().or(z.literal("")),
 });
 
@@ -224,6 +225,7 @@ async function saveSettings(formData: FormData) {
     whatsappUrl: String(formData.get("whatsappUrl") || ""),
     scholarUrl: String(formData.get("scholarUrl") || ""),
     researchGateUrl: String(formData.get("researchGateUrl") || ""),
+    contactRaw: String(formData.get("contactRaw") || ""),
     avatarUrl: String(formData.get("avatarUrl") || ""),
   });
 
@@ -254,6 +256,7 @@ async function saveSettings(formData: FormData) {
       whatsappUrl: normalizeWhatsApp(parsed.data.whatsappUrl),
       scholarUrl: normalizeUrl(parsed.data.scholarUrl),
       researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
+      contactRaw: cleanOptional(parsed.data.contactRaw),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
     },
     create: {
@@ -280,6 +283,7 @@ async function saveSettings(formData: FormData) {
       whatsappUrl: normalizeWhatsApp(parsed.data.whatsappUrl),
       scholarUrl: normalizeUrl(parsed.data.scholarUrl),
       researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
+      contactRaw: cleanOptional(parsed.data.contactRaw),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
     },
   });
@@ -487,32 +491,6 @@ async function hardDeleteProject(formData: FormData) {
   revalidatePath("/admin");
   await writeAuditLog({ action: "project.delete", targetType: "project", targetId: id });
   projectRedirect("project-deleted");
-}
-
-async function toggleProjectPublish(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") || "").trim();
-  const published = String(formData.get("published") || "false") === "true";
-  if (!id) adminRedirect("project-toggle-failed");
-
-  await prisma.project.update({ where: { id }, data: { published: !published } });
-  revalidatePath("/");
-  revalidatePath("/projects");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: published ? "project.unpublish" : "project.publish", targetType: "project", targetId: id });
-  adminRedirect(published ? "project-unpublished" : "project-published");
-}
-
-async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
-  let candidate = baseSlug;
-  let i = 2;
-
-  while (true) {
-    const found = await prisma.post.findUnique({ where: { slug: candidate } });
-    if (!found || (excludeId && found.id === excludeId)) return candidate;
-    candidate = `${baseSlug}-${i}`;
-    i += 1;
-  }
 }
 
 async function createPost(formData: FormData) {
@@ -1288,6 +1266,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </details>
         </form>
+
+          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3">
+            <summary className="cursor-pointer text-sm font-medium">Contact Section</summary>
+            <div className="mt-3 grid gap-3">
+              <textarea
+                name="contactRaw"
+                defaultValue={(settings as unknown as { contactRaw?: string })?.contactRaw ?? ""}
+                placeholder={"Paste all contact info lines here (Email, Phone, WhatsApp, LinkedIn, GitHub, etc.)"}
+                className="min-h-36 rounded-lg border px-3 py-2"
+              />
+              <div>
+                <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60" />
+              </div>
+            </div>
+          </details>
 
         <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3">
           <summary className="cursor-pointer text-sm font-medium">Profile picture Section</summary>

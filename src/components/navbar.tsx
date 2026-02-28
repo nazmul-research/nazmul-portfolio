@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/projects", label: "Projects" },
   { href: "/research", label: "Research" },
   { href: "/blog", label: "Blog" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export default function Navbar() {
