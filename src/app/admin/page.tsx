@@ -13,6 +13,7 @@ import FormDraftAssist from "@/components/form-draft-assist";
 import ReorderList from "@/components/reorder-list";
 import LivePreviewTextarea from "@/components/live-preview-textarea";
 import UrlImagePreview from "@/components/url-image-preview";
+import MultiImageUploader from "@/components/multi-image-uploader";
 import SlugHelper from "@/components/slug-helper";
 import BioField from "@/components/bio-field";
 import { AutoExcerptButton, AutoTagsButton } from "@/components/blog-meta-tools";
@@ -76,6 +77,7 @@ const postSchema = z.object({
   content: z.string().trim().min(10),
   tags: z.string().trim().optional(),
   imageUrl: z.string().trim().optional().or(z.literal("")),
+  coverImages: z.string().trim().optional().or(z.literal("")),
   published: z.boolean(),
   publishAt: z.string().optional().or(z.literal("")),
 });
@@ -118,6 +120,28 @@ function normalizeWhatsApp(value: string | null | undefined) {
   const digits = raw.replace(/[^\d]/g, "");
   if (!digits) return null;
   return `https://wa.me/${digits}`;
+}
+
+
+function normalizeImageArray(value: string | null | undefined) {
+  const raw = String(value || "").trim();
+  if (!raw) return [] as string[];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((v) => normalizeUrl(String(v || "")))
+        .filter((v): v is string => Boolean(v));
+    }
+  } catch {
+    // ignore and fallback
+  }
+
+  return raw
+    .split(/[\n,]/)
+    .map((s) => normalizeUrl(s.trim()))
+    .filter((v): v is string => Boolean(v));
 }
 
 function normalizeDateTime(value: string | null | undefined) {
@@ -472,6 +496,7 @@ async function createPost(formData: FormData) {
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
     imageUrl: String(formData.get("imageUrl") || ""),
+    coverImages: String(formData.get("coverImages") || ""),
     published: publishRequested,
     publishAt: String(formData.get("publishAt") || ""),
   });
@@ -484,6 +509,7 @@ async function createPost(formData: FormData) {
 
   const inferredImage = normalizeUrl(extractFirstImageFromContent(parsed.data.content));
   const explicitImage = normalizeUrl(parsed.data.imageUrl);
+  const coverImages = normalizeImageArray(parsed.data.coverImages);
 
   await prisma.post.create({
     data: {
@@ -494,7 +520,8 @@ async function createPost(formData: FormData) {
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
-      imageUrl: explicitImage || inferredImage || null,
+      imageUrl: explicitImage || inferredImage || coverImages[0] || null,
+      coverImages: coverImages.length ? JSON.stringify(coverImages) : null,
       published: parsed.data.published,
       publishAt: normalizeDateTime(parsed.data.publishAt),
       deletedAt: null,
@@ -523,6 +550,7 @@ async function updatePost(formData: FormData) {
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
     imageUrl: String(formData.get("imageUrl") || ""),
+    coverImages: String(formData.get("coverImages") || ""),
     published: publishRequested,
     publishAt: String(formData.get("publishAt") || ""),
   });
@@ -534,6 +562,7 @@ async function updatePost(formData: FormData) {
 
   const inferredImage = normalizeUrl(extractFirstImageFromContent(parsed.data.content));
   const explicitImage = normalizeUrl(parsed.data.imageUrl);
+  const coverImages = normalizeImageArray(parsed.data.coverImages);
 
   await prisma.post.update({
     where: { id },
@@ -545,7 +574,8 @@ async function updatePost(formData: FormData) {
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
-      imageUrl: explicitImage || inferredImage || null,
+      imageUrl: explicitImage || inferredImage || coverImages[0] || null,
+      coverImages: coverImages.length ? JSON.stringify(coverImages) : null,
       published: parsed.data.published,
       publishAt: normalizeDateTime(parsed.data.publishAt),
     },
@@ -1315,7 +1345,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
             <div className="space-y-2 md:col-span-2">
               <input id="post-image-url" type="text" name="imageUrl" defaultValue={editPost?.imageUrl ?? ""} placeholder="Cover image URL or /api/media/..." className="w-full rounded-lg border px-3 py-2" />
+              <input id="post-cover-images" type="hidden" name="coverImages" defaultValue={editPost?.coverImages ?? ""} />
               <ImageUploader targetInputId="post-image-url" />
+              <MultiImageUploader targetInputId="post-cover-images" />
               <UrlImagePreview inputId="post-image-url" />
             </div>
             <div className="space-y-2 md:col-span-2">

@@ -1,7 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import CoverSlider from "@/components/cover-slider";
 
 export const dynamic = "force-dynamic";
+
+function parseCoverImages(coverImages: string | null | undefined, imageUrl: string | null | undefined) {
+  let arr: string[] = [];
+  try {
+    const parsed = JSON.parse(coverImages || "[]");
+    if (Array.isArray(parsed)) arr = parsed.filter((x) => typeof x === "string");
+  } catch {
+    arr = [];
+  }
+  if (imageUrl && !arr.includes(imageUrl)) arr.unshift(imageUrl);
+  return arr;
+}
 
 export default async function BlogPage() {
   const now = new Date();
@@ -20,8 +33,10 @@ export default async function BlogPage() {
         ) : (
           posts.map((b) => (
             <Link key={b.id} href={`/blog/${b.slug}`} className="block glass-card rounded-3xl p-6 transition hover:bg-white/[0.05]">
-              {b.imageUrl && (
-                <img src={b.imageUrl} alt={b.title} className="mb-4 h-40 w-full rounded-xl object-cover" />
+              {parseCoverImages(b.coverImages, b.imageUrl).length > 0 && (
+                <div className="mb-4">
+                  <CoverSlider images={parseCoverImages(b.coverImages, b.imageUrl)} alt={b.title} />
+                </div>
               )}
               <h2 className="text-2xl font-semibold text-white">{b.title}</h2>
               <p className="mt-2 text-zinc-300">{b.excerpt}</p>

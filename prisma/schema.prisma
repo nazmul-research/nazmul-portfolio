@@ -65,6 +65,7 @@ model Post {
   content       String
   tags          String?
   imageUrl      String?
+  coverImages   String?
   sortOrder     Int       @default(0)
   published     Boolean   @default(false)
   publishAt     DateTime?

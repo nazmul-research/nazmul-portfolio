@@ -1,8 +1,21 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RichText from "@/components/rich-text";
+import CoverSlider from "@/components/cover-slider";
 
 export const dynamic = "force-dynamic";
+
+function parseCoverImages(coverImages: string | null | undefined, imageUrl: string | null | undefined) {
+  let arr: string[] = [];
+  try {
+    const parsed = JSON.parse(coverImages || "[]");
+    if (Array.isArray(parsed)) arr = parsed.filter((x) => typeof x === "string");
+  } catch {
+    arr = [];
+  }
+  if (imageUrl && !arr.includes(imageUrl)) arr.unshift(imageUrl);
+  return arr;
+}
 
 function firstImageFromContent(content: string) {
   const md = content.match(/!\[[^\]]*\]\(([^)\s]+)\)/i);
@@ -28,7 +41,8 @@ export default async function BlogPostPage({
   const validPreview = preview && preview === (process.env.DRAFT_PREVIEW_TOKEN || "preview-dev-token");
   if (!post || (!validPreview && (!post.published || post.deletedAt || (post.publishAt && post.publishAt > now)))) notFound();
 
-  const coverSrc = post.imageUrl || firstImageFromContent(post.content);
+  const fallbackCover = post.imageUrl || firstImageFromContent(post.content);
+  const coverImages = parseCoverImages(post.coverImages, fallbackCover);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -39,9 +53,9 @@ export default async function BlogPostPage({
       )}
       <h1 className="text-4xl font-bold text-white">{post.title}</h1>
       <p className="mt-2 text-zinc-400">{new Date(post.createdAt).toLocaleDateString()}</p>
-      {coverSrc && (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-lg">
-          <img src={coverSrc} alt={post.title} className="h-72 w-full object-cover md:h-96" />
+      {coverImages.length > 0 && (
+        <div className="mt-6">
+          <CoverSlider images={coverImages} alt={post.title} />
         </div>
       )}
       <article className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-sm">
