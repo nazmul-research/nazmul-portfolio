@@ -986,7 +986,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <h2 className="mb-2 text-xl font-semibold">Site Settings</h2>
         <p className="mb-4 text-sm text-zinc-500">Required: full name, headline, bio. Optional links must be valid URLs.</p>
         <form action={saveSettings} className="grid gap-3 md:grid-cols-2">
-          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
+          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3">
             <summary className="cursor-pointer text-sm font-medium">First Section</summary>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <input name="fullName" defaultValue={settings?.fullName ?? "Nazmul Islam"} placeholder="Full name" className="rounded-lg border px-3 py-2" required />
@@ -1014,7 +1014,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </details>
 
-          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
+          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3">
             <summary className="cursor-pointer text-sm font-medium">Second Section</summary>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <input name="stat1Label" defaultValue={(settings as unknown as { stat1Label?: string })?.stat1Label ?? "Systems shipped"} placeholder="Card 1 label" className="rounded-lg border px-3 py-2" />
@@ -1039,7 +1039,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
         </form>
 
-        <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
+        <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3">
           <summary className="cursor-pointer text-sm font-medium">Profile picture Section</summary>
           <div className="mt-3">
             {mediaAssets.length === 0 ? (
