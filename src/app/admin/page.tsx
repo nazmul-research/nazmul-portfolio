@@ -60,6 +60,7 @@ const projectSchema = z.object({
   projectImages: z.string().trim().optional().or(z.literal("")),
   demoUrl: z.string().trim().optional().or(z.literal("")),
   repoUrl: z.string().trim().optional().or(z.literal("")),
+  featured: z.boolean(),
   published: z.boolean(),
 });
 
@@ -338,6 +339,7 @@ async function createProject(formData: FormData) {
     projectImages: String(formData.get("projectImages") || ""),
     demoUrl: String(formData.get("demoUrl") || ""),
     repoUrl: String(formData.get("repoUrl") || ""),
+    featured: asBool(formData.get("featured")),
     published: asBool(formData.get("published")),
   });
 
@@ -353,6 +355,9 @@ async function createProject(formData: FormData) {
   const details = parsed.data.details;
   const detailsWords = details.split(/\s+/).filter(Boolean);
 
+  const maxFeatured = parsed.data.featured ? await prisma.project.aggregate({ _max: { featuredOrder: true } }) : null;
+  const nextFeaturedOrder = parsed.data.featured ? ((maxFeatured?._max.featuredOrder ?? -1) + 1) : 0;
+
   await prisma.project.create({
     data: {
       title: parsed.data.title,
@@ -363,8 +368,8 @@ async function createProject(formData: FormData) {
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
       demoUrl: normalizeUrl(parsed.data.demoUrl),
       repoUrl: normalizeUrl(parsed.data.repoUrl),
-      featured: false,
-      featuredOrder: 0,
+      featured: parsed.data.featured,
+      featuredOrder: nextFeaturedOrder,
       published: parsed.data.published,
       publishAt: null,
       deletedAt: null,
@@ -390,6 +395,7 @@ async function updateProject(formData: FormData) {
     projectImages: String(formData.get("projectImages") || ""),
     demoUrl: String(formData.get("demoUrl") || ""),
     repoUrl: String(formData.get("repoUrl") || ""),
+    featured: asBool(formData.get("featured")),
     published: asBool(formData.get("published")),
   });
 
@@ -405,6 +411,12 @@ async function updateProject(formData: FormData) {
   const details = parsed.data.details;
   const detailsWords = details.split(/\s+/).filter(Boolean);
 
+  const existingProject = await prisma.project.findUnique({ where: { id } });
+  const maxFeatured = parsed.data.featured && !existingProject?.featured ? await prisma.project.aggregate({ _max: { featuredOrder: true } }) : null;
+  const nextFeaturedOrder = parsed.data.featured
+    ? (existingProject?.featured ? (existingProject.featuredOrder ?? 0) : ((maxFeatured?._max.featuredOrder ?? -1) + 1))
+    : 0;
+
   await prisma.project.update({
     where: { id },
     data: {
@@ -416,8 +428,8 @@ async function updateProject(formData: FormData) {
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
       demoUrl: normalizeUrl(parsed.data.demoUrl),
       repoUrl: normalizeUrl(parsed.data.repoUrl),
-      featured: false,
-      featuredOrder: 0,
+      featured: parsed.data.featured,
+      featuredOrder: nextFeaturedOrder,
       published: parsed.data.published,
       publishAt: null,
     },
@@ -1308,7 +1320,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <input type="text" name="demoUrl" placeholder="Project demo/live URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
           <input type="text" name="repoUrl" placeholder="GitHub URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
                     <textarea name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
-          <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
+          <div className="md:col-span-2 flex flex-wrap gap-4">
+            <label className="text-sm"><input type="checkbox" name="featured" /> Feature on home page</label>
+            <label className="text-sm"><input type="checkbox" name="published" defaultChecked /> Published</label>
+          </div>
           <SubmitButton idleText="Add Project" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
           </form>
 
@@ -1346,7 +1361,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <input type="text" name="demoUrl" defaultValue={p.demoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="Project demo/live URL" />
                 <input type="text" name="repoUrl" defaultValue={p.repoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="GitHub URL (optional)" />
                                 <textarea name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
-                <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
+                <div className="md:col-span-2 flex flex-wrap gap-4">
+                  <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={p.featured} /> Feature on home page</label>
+                  <label className="text-sm"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
+                </div>
                 <div className="flex flex-wrap gap-2 md:col-span-2">
                   <SubmitButton idleText="Save Changes" pendingText="Saving..." className="btn-primary disabled:opacity-60" />
                 </div>
@@ -1539,7 +1557,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <textarea id="publication-abstract" name="abstract" placeholder="Abstract" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" />
           <textarea id="publication-excerpt" name="excerpt" placeholder="Short excerpt (shown on Research page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
           <div className="md:col-span-2"><PublicationExcerptTool abstractId="publication-abstract" excerptId="publication-excerpt" /></div>
-          <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
+          <div className="md:col-span-2 flex flex-wrap gap-4">
+            <label className="text-sm"><input type="checkbox" name="featured" /> Feature on home page</label>
+            <label className="text-sm"><input type="checkbox" name="published" defaultChecked /> Published</label>
+          </div>
           <SubmitButton idleText="Add Publication" pendingText="Adding..." className="btn-primary w-fit" />
         </form>
 
