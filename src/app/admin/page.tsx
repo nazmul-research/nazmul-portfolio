@@ -1033,25 +1033,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
         </form>
 
-        <div className="mt-6 rounded-xl border border-zinc-200 p-4">
-          <h3 className="text-sm font-semibold text-zinc-700">Media Library (latest uploads)</h3>
-          {mediaAssets.length === 0 ? (
-            <div className="mt-2 rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use any upload button to add images.</div>
-          ) : (
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              {mediaAssets.map((asset) => (
-                <div key={asset.id} className="rounded-lg border p-2">
-                  <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
-                  <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
-                  <form action={deleteMediaAsset} className="mt-2">
-                    <input type="hidden" name="id" value={asset.id} />
-                    <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
-                  </form>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
+          <summary className="cursor-pointer text-sm font-medium">Profile picture Section</summary>
+          <div className="mt-3">
+            {mediaAssets.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use any upload button to add images.</div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-3">
+                {mediaAssets.map((asset) => (
+                  <div key={asset.id} className="rounded-lg border p-2">
+                    <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
+                    <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
+                    <form action={deleteMediaAsset} className="mt-2">
+                      <input type="hidden" name="id" value={asset.id} />
+                      <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </details>
       </section>
       )}
 
