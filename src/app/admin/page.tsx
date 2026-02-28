@@ -1109,6 +1109,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.post.count({ where: { deletedAt: { not: null, gte: trashRetainFrom } } }),
   ]);
 
+  const editProject = panel === "projects" && editProjectId
+    ? await prisma.project.findFirst({ where: { id: editProjectId, deletedAt: null } })
+    : null;
+
   const editPost = panel === "blog" && editId
     ? await prisma.post.findFirst({ where: { id: editId, deletedAt: null } })
     : null;
@@ -1316,22 +1320,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
         <details className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4" open>
           <summary className="cursor-pointer text-sm font-semibold">Create project</summary>
-          <form id="create-project-form" action={createProject} className="mt-3 grid gap-3 md:grid-cols-2">
-          <SlugHelper titleName="title" slugName="slug" taken={projectSlugs} />
-          <input type="hidden" id="new-project-images" name="projectImages" />
+          <form id="create-project-form" action={editProject ? updateProject : createProject} className="mt-3 grid gap-3 md:grid-cols-2">
+          {editProject && <input type="hidden" name="id" value={editProject.id} />}
+          <SlugHelper titleName="title" slugName="slug" taken={projectSlugs.filter((slug) => slug !== (editProject?.slug ?? ""))} defaultTitle={editProject?.title ?? ""} defaultSlug={editProject?.slug ?? ""} />
+          <input type="hidden" id="new-project-images" name="projectImages" defaultValue={editProject?.projectImages ?? ""} />
           <div className="space-y-2 md:col-span-2">
             <MultiImageUploader targetInputId="new-project-images" uploadContext="blog" />
           </div>
-          <input type="text" name="demoUrl" placeholder="Project demo/live URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <input type="text" name="repoUrl" placeholder="GitHub URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
-                    <textarea id="new-project-excerpt" name="excerpt" placeholder="Short excerpt (shown on projects page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
+          <input type="text" name="demoUrl" defaultValue={editProject?.demoUrl ?? ""} placeholder="Project demo/live URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
+          <input type="text" name="repoUrl" defaultValue={editProject?.repoUrl ?? ""} placeholder="GitHub URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
+                    <textarea id="new-project-excerpt" name="excerpt" defaultValue={editProject?.summary ?? ""} placeholder="Short excerpt (shown on projects page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
           <div className="md:col-span-2"><ProjectExcerptTool detailsId="new-project-details" excerptId="new-project-excerpt" /></div>
-          <textarea id="new-project-details" name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
+          <textarea id="new-project-details" name="details" defaultValue={editProject?.content ?? ""} placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
           <div className="md:col-span-2 flex flex-wrap gap-4">
-            <label className="text-sm"><input type="checkbox" name="featured" /> Feature on home page</label>
-            <label className="text-sm"><input type="checkbox" name="published" defaultChecked /> Published</label>
+            <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={editProject?.featured ?? false} /> Feature on home page</label>
+            <label className="text-sm"><input type="checkbox" name="published" defaultChecked={editProject ? editProject.published : true} /> Published</label>
           </div>
-          <SubmitButton idleText="Add Project" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
+          <div className="flex flex-wrap gap-2 md:col-span-2">
+          <SubmitButton idleText={editProject ? "Save Changes" : "Add Project"} pendingText={editProject ? "Saving..." : "Adding..."} className="btn-primary w-fit disabled:opacity-60" />
+          {editProject && <a href="/admin?panel=projects" className="btn-secondary">Clear edit mode</a>}
+          </div>
           </form>
 
         </details>
@@ -1339,48 +1347,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
           {projects.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">🧩 No projects match current filter.</div>}
           {projects.map((p) => (
-            <details key={p.id} className="rounded-xl border border-zinc-200 p-4" open={editProjectId === p.id}>
-              <summary className="flex cursor-pointer items-center justify-between gap-3">
+            <div key={p.id} className="rounded-xl border border-zinc-200 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{p.title}</span>
                   <span className={`rounded-full border px-2 py-0.5 text-xs ${badgeTone(p.published)}`}>{p.published ? "Published" : "Draft"}</span>
                   {p.featured && <span className="rounded-full border border-indigo-300/40 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">Featured</span>}
                 </div>
-                <div className="flex items-center gap-2">
-                  <a href={`/admin?panel=projects&editProjectId=${p.id}`} className="rounded border px-2 py-1 text-xs">Edit</a>
-                  <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded border px-2 py-1 text-xs">Open</a>
-                  {!p.deletedAt && (
-                    <form action={deleteProject}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <ConfirmSubmitButton idleText="Delete" pendingText="..." confirmMessage="Move this project to trash?" className="btn-danger" />
-                    </form>
-                  )}
-                  <span className="text-xs text-zinc-500">Updated {new Date(p.updatedAt).toLocaleString()}</span>
-                </div>
-              </summary>
-
-              <form action={updateProject} className="mt-4 grid gap-3 md:grid-cols-2">
-                <input type="hidden" name="id" value={p.id} />
-                <SlugHelper titleName="title" slugName="slug" defaultTitle={p.title} defaultSlug={p.slug} taken={projectSlugs} />
-                <input type="hidden" id={`project-images-${p.id}`} name="projectImages" defaultValue={p.projectImages ?? ""} />
-                <div className="space-y-2 md:col-span-2">
-                  <MultiImageUploader targetInputId={`project-images-${p.id}`} uploadContext="blog" />
-                </div>
-                <input type="text" name="demoUrl" defaultValue={p.demoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="Project demo/live URL" />
-                <input type="text" name="repoUrl" defaultValue={p.repoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="GitHub URL (optional)" />
-                                <textarea id={`project-excerpt-${p.id}`} name="excerpt" defaultValue={p.summary} className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" placeholder="Short excerpt" />
-                <div className="md:col-span-2"><ProjectExcerptTool detailsId={`project-details-${p.id}`} excerptId={`project-excerpt-${p.id}`} /></div>
-                <textarea id={`project-details-${p.id}`} name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
-                <div className="md:col-span-2 flex flex-wrap gap-4">
-                  <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={p.featured} /> Feature on home page</label>
-                  <label className="text-sm"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
-                </div>
-                <div className="flex flex-wrap gap-2 md:col-span-2">
-                  <SubmitButton idleText="Save Changes" pendingText="Saving..." className="btn-primary disabled:opacity-60" />
-                </div>
-              </form>
-
+                <span className="text-xs text-zinc-500">Updated {new Date(p.updatedAt).toLocaleString()}</span>
+              </div>
               <div className="mt-3 flex flex-wrap gap-2">
+                <a href={`/admin?panel=projects&editProjectId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
+                <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Open</a>
                 <form action={toggleProjectPublish}>
                   <input type="hidden" name="id" value={p.id} />
                   <input type="hidden" name="published" value={String(p.published)} />
@@ -1394,17 +1372,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </form>
                     <form action={hardDeleteProject}>
                       <input type="hidden" name="id" value={p.id} />
-                      <ConfirmSubmitButton
-                        idleText="Delete Permanently"
-                        pendingText="Deleting..."
-                        confirmMessage="Permanently delete this project? This cannot be undone."
-                        className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
-                      />
+                      <ConfirmSubmitButton idleText="Delete Permanently" pendingText="Deleting..." confirmMessage="Permanently delete this project? This cannot be undone." className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
                     </form>
                   </>
-                ) : null}
+                ) : (
+                  <form action={deleteProject}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <ConfirmSubmitButton idleText="Delete" pendingText="Deleting..." confirmMessage="Move this project to trash?" className="btn-danger" />
+                  </form>
+                )}
               </div>
-            </details>
+            </div>
           ))}
         </div>
       </section>
@@ -1568,8 +1546,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <textarea id="publication-excerpt" name="excerpt" placeholder="Short excerpt (shown on Research page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
           <div className="md:col-span-2"><PublicationExcerptTool abstractId="publication-abstract" excerptId="publication-excerpt" /></div>
           <div className="md:col-span-2 flex flex-wrap gap-4">
-            <label className="text-sm"><input type="checkbox" name="featured" /> Feature on home page</label>
-            <label className="text-sm"><input type="checkbox" name="published" defaultChecked /> Published</label>
+            <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={editProject?.featured ?? false} /> Feature on home page</label>
+            <label className="text-sm"><input type="checkbox" name="published" defaultChecked={editProject ? editProject.published : true} /> Published</label>
           </div>
           <SubmitButton idleText="Add Publication" pendingText="Adding..." className="btn-primary w-fit" />
         </form>
