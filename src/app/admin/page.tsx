@@ -1406,11 +1406,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <div className="mt-3 flex flex-wrap gap-2">
                 <a href={`/admin?panel=projects&editProjectId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
                 <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Open</a>
-                <form action={toggleProjectPublish}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="published" value={String(p.published)} />
-                  <SubmitButton idleText={p.published ? "Move to Draft" : "Publish"} pendingText="Working..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
-                </form>
                 {scope === "trash" ? (
                   <>
                     <form action={restoreProject}>
