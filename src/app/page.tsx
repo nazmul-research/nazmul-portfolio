@@ -72,10 +72,10 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
       />
       <section className="fade-up relative overflow-hidden rounded-3xl border border-white/15 bg-white/[0.04] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl md:p-12">
-        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/15 blur-3xl" />
 
-        <div className="grid items-center gap-8 md:grid-cols-[1.25fr_.75fr]">
+        <div className="relative z-10 grid items-center gap-8 md:grid-cols-[1.25fr_.75fr]">
           <div>
             <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-zinc-200">{settings?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"}</p>
             <h1 className="mt-4 display-font text-4xl font-extrabold tracking-tight text-white md:text-6xl">{settings?.fullName ?? "Nazmul Islam"}</h1>
