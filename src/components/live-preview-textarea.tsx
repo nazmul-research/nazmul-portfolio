@@ -116,6 +116,7 @@ export default function LivePreviewTextarea({
           <button type="button" onClick={() => insert("- Bullet item\n")} className="rounded border px-2 py-1">• List</button>
           <button type="button" onClick={() => insert("1. Numbered item\n")} className="rounded border px-2 py-1">1. List</button>
           <button type="button" onClick={() => insert("\n> Quote\n")} className="rounded border px-2 py-1">Quote</button>
+          <button type="button" onClick={() => insert("[link text](https://example.com)")} className="rounded border px-2 py-1">Link</button>
           <button type="button" onClick={() => insert("\n```ts\n// code here\n```\n")} className="rounded border px-2 py-1">Code</button>
           <button type="button" onClick={insertImageMarkdownUrl} className="rounded border px-2 py-1">Inline Image URL</button>
           <button type="button" onClick={() => fileRef.current?.click()} className="rounded border px-2 py-1">Inline Image Upload</button>

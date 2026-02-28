@@ -29,9 +29,10 @@ function parseSingleImageLine(line: string) {
   return null;
 }
 
-function renderTextWithInlineCode(text: string, keyPrefix: string) {
-  const parts = text.split(/(`[^`]+`)/g);
-  return parts.map((part, i) => {
+function renderTextWithInlineCodeAndLinks(text: string, keyPrefix: string) {
+  const codeParts = text.split(/(`[^`]+`)/g);
+
+  return codeParts.map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
       return (
         <code key={`${keyPrefix}-c-${i}`} className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[0.92em] text-zinc-100">
@@ -39,7 +40,27 @@ function renderTextWithInlineCode(text: string, keyPrefix: string) {
         </code>
       );
     }
-    return <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
+
+    const out: React.ReactNode[] = [];
+    const regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    let j = 0;
+
+    while ((m = regex.exec(part))) {
+      if (m.index > last) out.push(<span key={`${keyPrefix}-t-${i}-${j++}`}>{part.slice(last, m.index)}</span>);
+      const label = m[1] || m[3];
+      const href = m[2] || m[3];
+      out.push(
+        <a key={`${keyPrefix}-a-${i}-${j++}`} href={href} target="_blank" rel="noopener noreferrer" className="underline decoration-white/40 underline-offset-2 hover:text-sky-300">
+          {label}
+        </a>,
+      );
+      last = regex.lastIndex;
+    }
+
+    if (last < part.length) out.push(<span key={`${keyPrefix}-t-${i}-${j++}`}>{part.slice(last)}</span>);
+    return out.length ? <span key={`${keyPrefix}-s-${i}`}>{out}</span> : <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
   });
 }
 
@@ -53,7 +74,7 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
 
   while ((m = mdRegex.exec(line))) {
     if (m.index > last) {
-      parts.push(...renderTextWithInlineCode(line.slice(last, m.index), `${keyPrefix}-txt-${idx++}`));
+      parts.push(...renderTextWithInlineCodeAndLinks(line.slice(last, m.index), `${keyPrefix}-txt-${idx++}`));
     }
     parts.push(
       <figure key={`${keyPrefix}-i-${idx++}`} className="my-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm">
@@ -69,7 +90,7 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
     let hm: RegExpExecArray | null;
     while ((hm = htmlRegex.exec(remainder))) {
       if (hm.index > hLast) {
-        parts.push(...renderTextWithInlineCode(remainder.slice(hLast, hm.index), `${keyPrefix}-txt-${idx++}`));
+        parts.push(...renderTextWithInlineCodeAndLinks(remainder.slice(hLast, hm.index), `${keyPrefix}-txt-${idx++}`));
       }
       parts.push(
         <figure key={`${keyPrefix}-i-${idx++}`} className="my-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm">
@@ -79,11 +100,11 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
       hLast = htmlRegex.lastIndex;
     }
     if (hLast < remainder.length) {
-      parts.push(...renderTextWithInlineCode(remainder.slice(hLast), `${keyPrefix}-txt-${idx++}`));
+      parts.push(...renderTextWithInlineCodeAndLinks(remainder.slice(hLast), `${keyPrefix}-txt-${idx++}`));
     }
   }
 
-  return parts.length ? parts : renderTextWithInlineCode(line, `${keyPrefix}-plain`);
+  return parts.length ? parts : renderTextWithInlineCodeAndLinks(line, `${keyPrefix}-plain`);
 }
 
 export default function RichText({ content, light = false }: Props) {
@@ -163,7 +184,7 @@ export default function RichText({ content, light = false }: Props) {
       blocks.push(
         <ul key={`ul-${i}`} className={`my-3 list-disc space-y-1 pl-6 ${bodyClass}`}>
           {items.map((it, idx) => (
-            <li key={`${i}-${idx}`}>{renderTextWithInlineCode(it, `li-${i}-${idx}`)}</li>
+            <li key={`${i}-${idx}`}>{renderTextWithInlineCodeAndLinks(it, `li-${i}-${idx}`)}</li>
           ))}
         </ul>,
       );
@@ -181,7 +202,7 @@ export default function RichText({ content, light = false }: Props) {
       blocks.push(
         <ol key={`ol-${i}`} className={`my-3 list-decimal space-y-1 pl-6 ${bodyClass}`}>
           {items.map((it, idx) => (
-            <li key={`${i}-${idx}`}>{renderTextWithInlineCode(it, `oli-${i}-${idx}`)}</li>
+            <li key={`${i}-${idx}`}>{renderTextWithInlineCodeAndLinks(it, `oli-${i}-${idx}`)}</li>
           ))}
         </ol>,
       );
