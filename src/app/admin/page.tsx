@@ -60,6 +60,8 @@ const projectSchema = z.object({
   title: z.string().trim().min(2),
   details: z.string().trim().min(10),
   projectImages: z.string().trim().optional().or(z.literal("")),
+  demoUrl: z.string().trim().optional().or(z.literal("")),
+  repoUrl: z.string().trim().optional().or(z.literal("")),
   published: z.boolean(),
 });
 
@@ -332,6 +334,8 @@ async function createProject(formData: FormData) {
     title: String(formData.get("title") || ""),
     details: String(formData.get("details") || ""),
     projectImages: String(formData.get("projectImages") || ""),
+    demoUrl: String(formData.get("demoUrl") || ""),
+    repoUrl: String(formData.get("repoUrl") || ""),
     published: asBool(formData.get("published")),
   });
 
@@ -355,6 +359,8 @@ async function createProject(formData: FormData) {
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
+      demoUrl: normalizeUrl(parsed.data.demoUrl),
+      repoUrl: normalizeUrl(parsed.data.repoUrl),
       featured: false,
       featuredOrder: 0,
       published: parsed.data.published,
@@ -380,6 +386,8 @@ async function updateProject(formData: FormData) {
     title: String(formData.get("title") || ""),
     details: String(formData.get("details") || ""),
     projectImages: String(formData.get("projectImages") || ""),
+    demoUrl: String(formData.get("demoUrl") || ""),
+    repoUrl: String(formData.get("repoUrl") || ""),
     published: asBool(formData.get("published")),
   });
 
@@ -404,6 +412,8 @@ async function updateProject(formData: FormData) {
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
+      demoUrl: normalizeUrl(parsed.data.demoUrl),
+      repoUrl: normalizeUrl(parsed.data.repoUrl),
       featured: false,
       featuredOrder: 0,
       published: parsed.data.published,
@@ -1311,6 +1321,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <div className="space-y-2 md:col-span-2">
             <MultiImageUploader targetInputId="new-project-images" uploadContext="blog" />
           </div>
+          <input type="text" name="demoUrl" placeholder="Project demo/live URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
+          <input type="text" name="repoUrl" placeholder="GitHub URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
           <textarea name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
           <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Project" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
@@ -1346,6 +1358,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <div className="space-y-2 md:col-span-2">
                   <MultiImageUploader targetInputId={`project-images-${p.id}`} uploadContext="blog" />
                 </div>
+                <input type="text" name="demoUrl" defaultValue={p.demoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="Project demo/live URL" />
+                <input type="text" name="repoUrl" defaultValue={p.repoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="GitHub URL (optional)" />
                 <textarea name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
                 <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
                 <div className="flex flex-wrap gap-2 md:col-span-2">

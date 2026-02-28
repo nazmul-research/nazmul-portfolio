@@ -38,6 +38,10 @@ export default async function ProjectsPage() {
               <h2 className="text-2xl font-semibold text-white">{p.title}</h2>
               <p className="mt-2 text-zinc-300">{p.summary}</p>
               <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-zinc-200">{p.content}</p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm">
+                {p.demoUrl && <a href={p.demoUrl} target="_blank" rel="noopener noreferrer" className="rounded border border-white/20 bg-white/5 px-3 py-1.5 text-zinc-100 hover:bg-white/10">Live Demo</a>}
+                {p.repoUrl && <a href={p.repoUrl} target="_blank" rel="noopener noreferrer" className="rounded border border-white/20 bg-white/5 px-3 py-1.5 text-zinc-100 hover:bg-white/10">GitHub</a>}
+              </div>
             </article>
           ))
         )}
