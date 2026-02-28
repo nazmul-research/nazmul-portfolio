@@ -29,6 +29,20 @@ function parseSingleImageLine(line: string) {
   return null;
 }
 
+function renderTextWithInlineCode(text: string, keyPrefix: string) {
+  const parts = text.split(/(`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+      return (
+        <code key={`${keyPrefix}-c-${i}`} className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[0.92em] text-zinc-100">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
+  });
+}
+
 function renderInlineMarkdown(line: string, keyPrefix: string) {
   const mdRegex = /!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^)\s]+)\)/gi;
   const htmlRegex = /<img[^>]*src=["']([^"']+)["'][^>]*>/gi;
@@ -39,16 +53,11 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
 
   while ((m = mdRegex.exec(line))) {
     if (m.index > last) {
-      parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{line.slice(last, m.index)}</span>);
+      parts.push(...renderTextWithInlineCode(line.slice(last, m.index), `${keyPrefix}-txt-${idx++}`));
     }
     parts.push(
       <figure key={`${keyPrefix}-i-${idx++}`} className="my-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm">
-        <img
-          src={m[2]}
-          alt={m[1] || "inline image"}
-          className="w-full object-cover"
-          loading="lazy"
-        />
+        <img src={m[2]} alt={m[1] || "inline image"} className="w-full object-cover" loading="lazy" />
       </figure>,
     );
     last = mdRegex.lastIndex;
@@ -60,7 +69,7 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
     let hm: RegExpExecArray | null;
     while ((hm = htmlRegex.exec(remainder))) {
       if (hm.index > hLast) {
-        parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{remainder.slice(hLast, hm.index)}</span>);
+        parts.push(...renderTextWithInlineCode(remainder.slice(hLast, hm.index), `${keyPrefix}-txt-${idx++}`));
       }
       parts.push(
         <figure key={`${keyPrefix}-i-${idx++}`} className="my-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm">
@@ -70,11 +79,11 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
       hLast = htmlRegex.lastIndex;
     }
     if (hLast < remainder.length) {
-      parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{remainder.slice(hLast)}</span>);
+      parts.push(...renderTextWithInlineCode(remainder.slice(hLast), `${keyPrefix}-txt-${idx++}`));
     }
   }
 
-  return parts.length ? parts : line;
+  return parts.length ? parts : renderTextWithInlineCode(line, `${keyPrefix}-plain`);
 }
 
 export default function RichText({ content, light = false }: Props) {
@@ -90,6 +99,24 @@ export default function RichText({ content, light = false }: Props) {
 
     if (!line) {
       i += 1;
+      continue;
+    }
+
+    if (line.startsWith("```")) {
+      const lang = line.replace(/```/, "").trim();
+      const codeLines: string[] = [];
+      i += 1;
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i += 1;
+      }
+      if (i < lines.length && lines[i].trim().startsWith("```")) i += 1;
+      blocks.push(
+        <pre key={`code-${i}`} className="my-4 overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-4">
+          {lang ? <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">{lang}</div> : null}
+          <code className="font-mono text-sm text-zinc-100">{codeLines.join("\n")}</code>
+        </pre>,
+      );
       continue;
     }
 
@@ -136,7 +163,7 @@ export default function RichText({ content, light = false }: Props) {
       blocks.push(
         <ul key={`ul-${i}`} className={`my-3 list-disc space-y-1 pl-6 ${bodyClass}`}>
           {items.map((it, idx) => (
-            <li key={`${i}-${idx}`}>{it}</li>
+            <li key={`${i}-${idx}`}>{renderTextWithInlineCode(it, `li-${i}-${idx}`)}</li>
           ))}
         </ul>,
       );
@@ -154,7 +181,7 @@ export default function RichText({ content, light = false }: Props) {
       blocks.push(
         <ol key={`ol-${i}`} className={`my-3 list-decimal space-y-1 pl-6 ${bodyClass}`}>
           {items.map((it, idx) => (
-            <li key={`${i}-${idx}`}>{it}</li>
+            <li key={`${i}-${idx}`}>{renderTextWithInlineCode(it, `oli-${i}-${idx}`)}</li>
           ))}
         </ol>,
       );
