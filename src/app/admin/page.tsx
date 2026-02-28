@@ -1245,6 +1245,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input name="location" defaultValue={settings?.location ?? ""} placeholder="Location" className="rounded-lg border px-3 py-2" />
 
               <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
+              <input name="mobileNo" defaultValue={(settings as unknown as { cellNo?: string })?.cellNo ?? ""} placeholder="Mobile no" className="rounded-lg border px-3 py-2" />
               <input type="url" name="linkedinUrl" defaultValue={settings?.linkedinUrl ?? "https://www.linkedin.com/in/nazmul87/"} placeholder="LinkedIn URL" className="rounded-lg border px-3 py-2" />
               <input type="url" name="githubUrl" defaultValue={settings?.githubUrl ?? "https://github.com/mdnazmulislam0087"} placeholder="GitHub URL" className="rounded-lg border px-3 py-2" />
               <input type="url" name="githubUrl2" defaultValue={(settings as unknown as { githubUrl2?: string })?.githubUrl2 ?? ""} placeholder="Second GitHub URL" className="rounded-lg border px-3 py-2" />
@@ -1281,21 +1282,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </details>
         </form>
-
-          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3">
-            <summary className="cursor-pointer text-sm font-medium">Contact Section</summary>
-            <div className="mt-3 grid gap-3">
-              <textarea
-                name="contactRaw"
-                defaultValue={(settings as unknown as { contactRaw?: string })?.contactRaw ?? ""}
-                placeholder={"Paste all contact info lines here (Email, Phone, WhatsApp, LinkedIn, GitHub, etc.)"}
-                className="min-h-36 rounded-lg border px-3 py-2"
-              />
-              <div>
-                <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60" />
-              </div>
-            </div>
-          </details>
 
         <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3">
           <summary className="cursor-pointer text-sm font-medium">Profile picture Section</summary>
