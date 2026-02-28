@@ -1056,6 +1056,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 ))}
               </div>
             )}
+            <div className="mt-3">
+              <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60" />
+            </div>
           </div>
         </details>
       </section>
