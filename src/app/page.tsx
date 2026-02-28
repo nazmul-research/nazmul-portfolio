@@ -91,7 +91,7 @@ export default async function HomePage() {
 
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
               {settings?.email && <a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="email" />Email</a>}
-              {socials?.cellNo && <a href={`tel:${socials.cellNo.replace(/\s+/g, "")}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="phone" />Cell no</a>}
+              {socials?.cellNo && <a href={`tel:${socials.cellNo.replace(/\s+/g, "")}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="phone" />{socials.cellNo}</a>}
               {socials?.whatsappUrl && <a href={socials.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="whatsapp" />WhatsApp</a>}
               {socials?.linkedinUrl && <a href={socials.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="linkedin" />LinkedIn</a>}
               {socials?.githubUrl && <a href={socials.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 1</a>}
