@@ -906,7 +906,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           : {}),
   };
 
-  const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets] = await Promise.all([
+  const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.project.findMany({ where: projectWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.post.findMany({ where: postWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
@@ -914,6 +914,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
     prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 24 }),
+    prisma.post.count({ where: { deletedAt: null, published: false } }),
+    prisma.post.count({ where: { deletedAt: null, published: true } }),
+    prisma.post.count({ where: { deletedAt: { not: null, gte: trashRetainFrom } } }),
   ]);
 
   const editPost = panel === "blog" && editId
@@ -1203,9 +1206,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
         <div className="mt-4 flex flex-wrap gap-2 text-sm">
           <a href="/admin?panel=blog&blogView=create" className={`rounded border px-3 py-1.5 ${blogView === "create" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Create blog post</a>
-          <a href="/admin?panel=blog&blogView=draft" className={`rounded border px-3 py-1.5 ${blogView === "draft" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Draft posts</a>
-          <a href="/admin?panel=blog&blogView=published" className={`rounded border px-3 py-1.5 ${blogView === "published" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Published posts</a>
-          <a href="/admin?panel=blog&blogView=trash" className={`rounded border px-3 py-1.5 ${blogView === "trash" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Trash</a>
+          <a href="/admin?panel=blog&blogView=draft" className={`rounded border px-3 py-1.5 ${blogView === "draft" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Draft posts ({draftCount})</a>
+          <a href="/admin?panel=blog&blogView=published" className={`rounded border px-3 py-1.5 ${blogView === "published" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Published posts ({publishedCount})</a>
+          <a href="/admin?panel=blog&blogView=trash" className={`rounded border px-3 py-1.5 ${blogView === "trash" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Trash ({trashCount})</a>
         </div>
 
         {(blogView === "draft" || blogView === "published" || blogView === "trash") && (
@@ -1219,7 +1222,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </form>
         )}
 
-        <div className="mt-5 rounded-xl border border-zinc-200 p-4">
+        {blogView === "create" && (<div className="mt-5 rounded-xl border border-zinc-200 p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-medium text-zinc-700">{editPost ? `Editing: ${editPost.title}` : "Create new post"}</p>
             {editPost && <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">Edit mode</span>}
@@ -1265,11 +1268,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               {editPost && <a href={`/admin?panel=blog&blogView=${blogView === "create" ? "published" : blogView}`} className="btn-secondary">Back to list</a>}
             </div>
           </form>
-        </div>
+        </div>)}
 
         {(blogView === "draft" || blogView === "published" || blogView === "trash") && (
           <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
-            {posts.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">✍️ No posts match current filter.</div>}
+            {posts.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">0 posts</div>}
             {posts.map((p) => (
               <div key={p.id} className="rounded-xl border border-zinc-200 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
