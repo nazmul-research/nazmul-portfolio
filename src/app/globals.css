@@ -130,19 +130,19 @@ h1,h2,h3,.display-font {
   to { transform: translateX(-50%); }
 }
 
-.avatar-swap-a { animation: avatarSwapA 10s ease-in-out infinite; }
-.avatar-swap-b { animation: avatarSwapB 10s ease-in-out infinite; }
-
-@keyframes avatarSwapA {
-  0%, 45% { opacity: 1; transform: scale(1); }
-  50%, 95% { opacity: 0; transform: scale(1.04); }
-  100% { opacity: 1; transform: scale(1); }
+.avatar-rotate {
+  opacity: 0;
+  animation-name: avatarRotate;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
-@keyframes avatarSwapB {
-  0%, 45% { opacity: 0; transform: scale(1.04); }
-  50%, 95% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.04); }
+@keyframes avatarRotate {
+  0% { opacity: 0; transform: scale(1.03); }
+  4% { opacity: 1; transform: scale(1); }
+  12% { opacity: 1; transform: scale(1); }
+  16% { opacity: 0; transform: scale(1.02); }
+  100% { opacity: 0; }
 }
 
 .admin-panel {

@@ -28,7 +28,7 @@ export default async function HomePage() {
     take: 3,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
-  const mediaAssets = await prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 2 });
+  const mediaAssets = await prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 24 });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const socials = settings as unknown as {
@@ -111,7 +111,8 @@ export default async function HomePage() {
                         width={224}
                         height={224}
                         unoptimized
-                        className={`absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover ${idx % 2 === 0 ? "avatar-swap-a" : "avatar-swap-b"}`}
+                        className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover avatar-rotate"
+                        style={{ animationDelay: `${idx * 3.2}s`, animationDuration: `${Math.max(6, mediaAssets.length * 3.2)}s` }}
                       />
                     ))
                   ) : (
