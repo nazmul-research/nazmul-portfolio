@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import RichText from "@/components/rich-text";
 import CoverSlider from "@/components/cover-slider";
 import ReadingProgress from "@/components/reading-progress";
+import StickyToc from "@/components/sticky-toc";
 
 export const dynamic = "force-dynamic";
 
@@ -89,7 +90,7 @@ export default async function BlogPostPage({
   ]);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10" id="main-content">
+    <main className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10" id="main-content">
       <ReadingProgress />
       {validPreview && (
         <div className="mb-4 rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-sm text-amber-900">
@@ -108,7 +109,7 @@ export default async function BlogPostPage({
                 overlay={<div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />}
               />
             )}
-            <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7">
+            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-7">
               <p className="mb-2 text-xs uppercase tracking-wide text-zinc-200">{post.category === "personal" ? "Personal" : "Technical"} • {readTime(post.content)} min read</p>
               <h1 className="text-3xl font-bold text-white md:text-5xl">{post.title}</h1>
               <p className="mt-2 text-sm text-zinc-200">{post.writerName || "Nazmul"} • {new Date(post.createdAt).toLocaleDateString()}</p>
@@ -143,18 +144,7 @@ export default async function BlogPostPage({
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-3">
             <Link href="/blog" className="block rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-zinc-100 hover:bg-white/[0.06]">← Back to Writing</Link>
-            {headings.length > 0 && (
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <p className="mb-2 text-xs uppercase tracking-wide text-zinc-400">On this page</p>
-                <div className="space-y-1">
-                  {headings.map((h) => (
-                    <a key={h.id} href={`#${h.id}`} className={`block text-sm text-zinc-200 hover:text-white ${h.level === 3 ? "pl-3" : ""}`}>
-                      {h.text}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+            {headings.length > 0 && <StickyToc headings={headings} />}
           </div>
         </aside>
       </div>
