@@ -10,7 +10,6 @@ import SubmitButton from "@/components/submit-button";
 import ConfirmSubmitButton from "@/components/confirm-submit-button";
 import ImageUploader from "@/components/image-uploader";
 import FormDraftAssist from "@/components/form-draft-assist";
-import ReorderList from "@/components/reorder-list";
 import LivePreviewTextarea from "@/components/live-preview-textarea";
 import UrlImagePreview from "@/components/url-image-preview";
 import MultiImageUploader from "@/components/multi-image-uploader";
@@ -483,24 +482,6 @@ async function toggleProjectPublish(formData: FormData) {
   revalidatePath("/admin");
   await writeAuditLog({ action: published ? "project.unpublish" : "project.publish", targetType: "project", targetId: id });
   adminRedirect(published ? "project-unpublished" : "project-published");
-}
-
-async function saveProjectSortOrder(formData: FormData) {
-  "use server";
-  const raw = String(formData.get("projectOrder") || "[]");
-  let ids: string[] = [];
-  try {
-    ids = JSON.parse(raw) as string[];
-  } catch {
-    adminRedirect("project-reorder-failed");
-  }
-
-  await Promise.all(ids.map((id, idx) => prisma.project.update({ where: { id }, data: { sortOrder: idx } })));
-  revalidatePath("/");
-  revalidatePath("/projects");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "project.sort_order", targetType: "project", targetId: String(ids.length), meta: "drag-drop" });
-  adminRedirect("project-reordered");
 }
 
 async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
@@ -1313,8 +1294,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <section id="projects-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold">Projects CMS</h2>
 
-        <details className="rounded-xl border border-zinc-200 p-4" open>
-          <summary className="cursor-pointer text-sm font-medium">Create project</summary>
+        <details className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4" open>
+          <summary className="cursor-pointer text-sm font-semibold">Create project</summary>
           <form id="create-project-form" action={createProject} className="mt-3 grid gap-3 md:grid-cols-2">
           <SlugHelper titleName="title" slugName="slug" taken={projectSlugs} />
           <input type="hidden" id="new-project-images" name="projectImages" />
@@ -1329,14 +1310,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </form>
           <div className="mt-2"><FormDraftAssist formId="create-project-form" storageKey="admin-create-project-draft" /></div>
         </details>
-
-        <div className="mt-6 rounded-xl border border-zinc-200 p-3">
-          <p className="mb-2 text-sm font-medium text-zinc-700">Drag to reorder project display order</p>
-          <form action={saveProjectSortOrder} className="space-y-3">
-            <ReorderList inputName="projectOrder" items={projects.map((p) => ({ id: p.id, label: p.title }))} />
-            <SubmitButton idleText="Save Project Order" pendingText="Saving..." className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white" />
-          </form>
-        </div>
 
         <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
           {projects.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">🧩 No projects match current filter.</div>}
