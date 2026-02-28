@@ -18,6 +18,7 @@ import { AutoExcerptButton, AutoTagsButton } from "@/components/blog-meta-tools"
 import WriterStatus from "@/components/writer-status";
 import PublishChecklist from "@/components/publish-checklist";
 import PublicationExcerptTool from "@/components/publication-excerpt-tool";
+import ProjectExcerptTool from "@/components/project-excerpt-tool";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { authenticator } from "otplib";
@@ -56,6 +57,7 @@ const siteSettingsSchema = z.object({
 
 const projectSchema = z.object({
   title: z.string().trim().min(2),
+  excerpt: z.string().trim().optional().or(z.literal("")),
   details: z.string().trim().min(10),
   projectImages: z.string().trim().optional().or(z.literal("")),
   demoUrl: z.string().trim().optional().or(z.literal("")),
@@ -335,6 +337,7 @@ async function createProject(formData: FormData) {
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
     details: String(formData.get("details") || ""),
     projectImages: String(formData.get("projectImages") || ""),
     demoUrl: String(formData.get("demoUrl") || ""),
@@ -362,7 +365,7 @@ async function createProject(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug,
-      summary: detailsWords.slice(0, 100).join(" "),
+      summary: cleanOptional(parsed.data.excerpt) || detailsWords.slice(0, 100).join(" "),
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
@@ -391,6 +394,7 @@ async function updateProject(formData: FormData) {
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
     details: String(formData.get("details") || ""),
     projectImages: String(formData.get("projectImages") || ""),
     demoUrl: String(formData.get("demoUrl") || ""),
@@ -422,7 +426,7 @@ async function updateProject(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug: slugInput || undefined,
-      summary: detailsWords.slice(0, 100).join(" "),
+      summary: cleanOptional(parsed.data.excerpt) || detailsWords.slice(0, 100).join(" "),
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
@@ -1320,7 +1324,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
           <input type="text" name="demoUrl" placeholder="Project demo/live URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
           <input type="text" name="repoUrl" placeholder="GitHub URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
-                    <textarea name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
+                    <textarea id="new-project-excerpt" name="excerpt" placeholder="Short excerpt (shown on projects page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
+          <div className="md:col-span-2"><ProjectExcerptTool detailsId="new-project-details" excerptId="new-project-excerpt" /></div>
+          <textarea id="new-project-details" name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
           <div className="md:col-span-2 flex flex-wrap gap-4">
             <label className="text-sm"><input type="checkbox" name="featured" /> Feature on home page</label>
             <label className="text-sm"><input type="checkbox" name="published" defaultChecked /> Published</label>
@@ -1362,7 +1368,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </div>
                 <input type="text" name="demoUrl" defaultValue={p.demoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="Project demo/live URL" />
                 <input type="text" name="repoUrl" defaultValue={p.repoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" placeholder="GitHub URL (optional)" />
-                                <textarea name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
+                                <textarea id={`project-excerpt-${p.id}`} name="excerpt" defaultValue={p.summary} className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" placeholder="Short excerpt" />
+                <div className="md:col-span-2"><ProjectExcerptTool detailsId={`project-details-${p.id}`} excerptId={`project-excerpt-${p.id}`} /></div>
+                <textarea id={`project-details-${p.id}`} name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
                 <div className="md:col-span-2 flex flex-wrap gap-4">
                   <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={p.featured} /> Feature on home page</label>
                   <label className="text-sm"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
