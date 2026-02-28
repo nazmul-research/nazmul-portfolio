@@ -43,6 +43,7 @@ model Project {
   content       String
   stack         String?
   imageUrl      String?
+  projectImages String?
   demoUrl       String?
   repoUrl       String?
   featured      Boolean   @default(false)

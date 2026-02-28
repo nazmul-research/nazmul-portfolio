@@ -58,16 +58,9 @@ const siteSettingsSchema = z.object({
 
 const projectSchema = z.object({
   title: z.string().trim().min(2),
-  summary: z.string().trim().min(10),
-  content: z.string().trim().min(10),
-  stack: z.string().trim().optional(),
-  imageUrl: z.string().trim().optional().or(z.literal("")),
-  demoUrl: z.string().trim().url().optional().or(z.literal("")),
-  repoUrl: z.string().trim().url().optional().or(z.literal("")),
-  featured: z.boolean(),
-  featuredOrder: z.number().int().min(0),
+  details: z.string().trim().min(10),
+  projectImages: z.string().trim().optional().or(z.literal("")),
   published: z.boolean(),
-  publishAt: z.string().optional().or(z.literal("")),
 });
 
 const postSchema = z.object({
@@ -337,16 +330,9 @@ async function createProject(formData: FormData) {
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
-    summary: String(formData.get("summary") || ""),
-    content: String(formData.get("content") || ""),
-    stack: String(formData.get("stack") || ""),
-    imageUrl: String(formData.get("imageUrl") || ""),
-    demoUrl: String(formData.get("demoUrl") || ""),
-    repoUrl: String(formData.get("repoUrl") || ""),
-    featured: asBool(formData.get("featured")),
-    featuredOrder: Number(formData.get("featuredOrder") || 0),
+    details: String(formData.get("details") || ""),
+    projectImages: String(formData.get("projectImages") || ""),
     published: asBool(formData.get("published")),
-    publishAt: String(formData.get("publishAt") || ""),
   });
 
   if (!parsed.success) adminRedirect("project-invalid");
@@ -357,20 +343,22 @@ async function createProject(formData: FormData) {
   const existingSlug = await prisma.project.findUnique({ where: { slug } });
   if (existingSlug) adminRedirect("slug-conflict");
 
+  const projectImages = normalizeImageArray(parsed.data.projectImages);
+  const details = parsed.data.details;
+  const detailsWords = details.split(/\s+/).filter(Boolean);
+
   await prisma.project.create({
     data: {
       title: parsed.data.title,
       slug,
-      summary: parsed.data.summary,
-      content: parsed.data.content,
-      stack: cleanOptional(parsed.data.stack),
-      imageUrl: normalizeUrl(parsed.data.imageUrl),
-      demoUrl: normalizeUrl(parsed.data.demoUrl),
-      repoUrl: normalizeUrl(parsed.data.repoUrl),
-      featured: parsed.data.featured,
-      featuredOrder: parsed.data.featuredOrder,
+      summary: detailsWords.slice(0, 35).join(" "),
+      content: details,
+      imageUrl: projectImages[0] || null,
+      projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
+      featured: false,
+      featuredOrder: 0,
       published: parsed.data.published,
-      publishAt: normalizeDateTime(parsed.data.publishAt),
+      publishAt: null,
       deletedAt: null,
     },
   });
@@ -390,16 +378,9 @@ async function updateProject(formData: FormData) {
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
-    summary: String(formData.get("summary") || ""),
-    content: String(formData.get("content") || ""),
-    stack: String(formData.get("stack") || ""),
-    imageUrl: String(formData.get("imageUrl") || ""),
-    demoUrl: String(formData.get("demoUrl") || ""),
-    repoUrl: String(formData.get("repoUrl") || ""),
-    featured: asBool(formData.get("featured")),
-    featuredOrder: Number(formData.get("featuredOrder") || 0),
+    details: String(formData.get("details") || ""),
+    projectImages: String(formData.get("projectImages") || ""),
     published: asBool(formData.get("published")),
-    publishAt: String(formData.get("publishAt") || ""),
   });
 
   if (!parsed.success) adminRedirect("project-invalid");
@@ -410,21 +391,23 @@ async function updateProject(formData: FormData) {
     if (existingSlug && existingSlug.id !== id) adminRedirect("slug-conflict");
   }
 
+  const projectImages = normalizeImageArray(parsed.data.projectImages);
+  const details = parsed.data.details;
+  const detailsWords = details.split(/\s+/).filter(Boolean);
+
   await prisma.project.update({
     where: { id },
     data: {
       title: parsed.data.title,
       slug: slugInput || undefined,
-      summary: parsed.data.summary,
-      content: parsed.data.content,
-      stack: cleanOptional(parsed.data.stack),
-      imageUrl: normalizeUrl(parsed.data.imageUrl),
-      demoUrl: normalizeUrl(parsed.data.demoUrl),
-      repoUrl: normalizeUrl(parsed.data.repoUrl),
-      featured: parsed.data.featured,
-      featuredOrder: parsed.data.featuredOrder,
+      summary: detailsWords.slice(0, 35).join(" "),
+      content: details,
+      imageUrl: projectImages[0] || null,
+      projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
+      featured: false,
+      featuredOrder: 0,
       published: parsed.data.published,
-      publishAt: normalizeDateTime(parsed.data.publishAt),
+      publishAt: null,
     },
   });
 
@@ -490,26 +473,6 @@ async function toggleProjectPublish(formData: FormData) {
   revalidatePath("/admin");
   await writeAuditLog({ action: published ? "project.unpublish" : "project.publish", targetType: "project", targetId: id });
   adminRedirect(published ? "project-unpublished" : "project-published");
-}
-
-async function nudgeFeaturedOrder(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") || "").trim();
-  const direction = String(formData.get("direction") || "");
-  if (!id || !["up", "down"].includes(direction)) adminRedirect("project-reorder-failed");
-
-  const project = await prisma.project.findUnique({ where: { id } });
-  if (!project) adminRedirect("project-reorder-failed");
-
-  const delta = direction === "up" ? -1 : 1;
-  const nextOrder = Math.max(0, project.featuredOrder + delta);
-
-  await prisma.project.update({ where: { id }, data: { featuredOrder: nextOrder, featured: true } });
-
-  revalidatePath("/");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "project.reorder", targetType: "project", targetId: id, meta: direction });
-  adminRedirect("project-reordered");
 }
 
 async function saveProjectSortOrder(formData: FormData) {
@@ -1344,21 +1307,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <summary className="cursor-pointer text-sm font-medium">Create project</summary>
           <form id="create-project-form" action={createProject} className="mt-3 grid gap-3 md:grid-cols-2">
           <SlugHelper titleName="title" slugName="slug" taken={projectSlugs} />
-          <input name="stack" placeholder="Stack (e.g. Next.js, Python)" className="rounded-lg border px-3 py-2" />
-          <div className="space-y-2">
-            <input id="new-project-image-url" type="url" name="imageUrl" placeholder="Image URL" className="w-full rounded-lg border px-3 py-2" />
-            <ImageUploader targetInputId="new-project-image-url" />
+          <input type="hidden" id="new-project-images" name="projectImages" />
+          <div className="space-y-2 md:col-span-2">
+            <MultiImageUploader targetInputId="new-project-images" uploadContext="blog" />
           </div>
-          <input type="url" name="demoUrl" placeholder="Demo URL" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="repoUrl" placeholder="Repo URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <input type="datetime-local" name="publishAt" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <input name="summary" placeholder="Summary" className="rounded-lg border px-3 py-2 md:col-span-2" required />
-          <textarea name="content" placeholder="Project details" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" required />
-          <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
-            <label className="text-sm"><input type="checkbox" name="featured" /> Featured on homepage</label>
-            <label className="text-sm"><input type="checkbox" name="published" defaultChecked /> Published</label>
-            <input type="number" min="0" name="featuredOrder" defaultValue={0} placeholder="Featured order (0 first)" className="rounded-lg border px-3 py-2 text-sm" />
-          </div>
+          <textarea name="details" placeholder="Project details" className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
+          <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Project" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
           </form>
           <div className="mt-2"><FormDraftAssist formId="create-project-form" storageKey="admin-create-project-draft" /></div>
@@ -1388,21 +1342,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <form action={updateProject} className="mt-4 grid gap-3 md:grid-cols-2">
                 <input type="hidden" name="id" value={p.id} />
                 <SlugHelper titleName="title" slugName="slug" defaultTitle={p.title} defaultSlug={p.slug} taken={projectSlugs} />
-                <input name="stack" defaultValue={p.stack ?? ""} className="rounded-lg border px-3 py-2" />
-                <div className="space-y-2">
-                  <input id={`project-image-url-${p.id}`} type="url" name="imageUrl" defaultValue={p.imageUrl ?? ""} className="w-full rounded-lg border px-3 py-2" />
-                  <ImageUploader targetInputId={`project-image-url-${p.id}`} />
+                <input type="hidden" id={`project-images-${p.id}`} name="projectImages" defaultValue={p.projectImages ?? ""} />
+                <div className="space-y-2 md:col-span-2">
+                  <MultiImageUploader targetInputId={`project-images-${p.id}`} uploadContext="blog" />
                 </div>
-                <input type="url" name="demoUrl" defaultValue={p.demoUrl ?? ""} className="rounded-lg border px-3 py-2" />
-                <input type="url" name="repoUrl" defaultValue={p.repoUrl ?? ""} className="rounded-lg border px-3 py-2 md:col-span-2" />
-                <input type="datetime-local" name="publishAt" defaultValue={p.publishAt ? new Date(p.publishAt).toISOString().slice(0, 16) : ""} className="rounded-lg border px-3 py-2 md:col-span-2" />
-                <input name="summary" defaultValue={p.summary} className="rounded-lg border px-3 py-2 md:col-span-2" required />
-                <textarea name="content" defaultValue={p.content} className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" required />
-                <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
-                  <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={p.featured} /> Featured on homepage</label>
-                  <label className="text-sm"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
-                  <input type="number" min="0" name="featuredOrder" defaultValue={p.featuredOrder} className="rounded-lg border px-3 py-2 text-sm" />
-                </div>
+                <textarea name="details" defaultValue={p.content} className="min-h-28 rounded-lg border px-3 py-2 md:col-span-2" required />
+                <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
                 <div className="flex flex-wrap gap-2 md:col-span-2">
                   <SubmitButton idleText="Save Changes" pendingText="Saving..." className="btn-primary disabled:opacity-60" />
                 </div>
@@ -1413,16 +1358,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <input type="hidden" name="id" value={p.id} />
                   <input type="hidden" name="published" value={String(p.published)} />
                   <SubmitButton idleText={p.published ? "Move to Draft" : "Publish"} pendingText="Working..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
-                </form>
-                <form action={nudgeFeaturedOrder}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="direction" value="up" />
-                  <SubmitButton idleText="Feature ↑" pendingText="..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
-                </form>
-                <form action={nudgeFeaturedOrder}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="direction" value="down" />
-                  <SubmitButton idleText="Feature ↓" pendingText="..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
                 </form>
                 {scope === "trash" ? (
                   <>
