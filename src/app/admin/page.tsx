@@ -182,7 +182,7 @@ function slugify(value: string) {
 
 
 function makeExcerptFromAbstract(abstract: string) {
-  return abstract.trim().split(/\s+/).filter(Boolean).slice(0, 100).join(" ");
+  return abstract.trim().split(/\s+/).filter(Boolean).slice(0, 50).join(" ");
 }
 
 function extractFirstImageFromContent(content: string) {
@@ -365,7 +365,7 @@ async function createProject(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug,
-      summary: cleanOptional(parsed.data.excerpt) || detailsWords.slice(0, 100).join(" "),
+      summary: cleanOptional(parsed.data.excerpt) || detailsWords.slice(0, 50).join(" "),
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
@@ -426,7 +426,7 @@ async function updateProject(formData: FormData) {
     data: {
       title: parsed.data.title,
       slug: slugInput || undefined,
-      summary: cleanOptional(parsed.data.excerpt) || detailsWords.slice(0, 100).join(" "),
+      summary: cleanOptional(parsed.data.excerpt) || detailsWords.slice(0, 50).join(" "),
       content: details,
       imageUrl: projectImages[0] || null,
       projectImages: projectImages.length ? JSON.stringify(projectImages) : null,
