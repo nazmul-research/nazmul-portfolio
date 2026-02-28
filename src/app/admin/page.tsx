@@ -181,6 +181,17 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
+async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
+  let candidate = baseSlug;
+  let i = 2;
+
+  while (true) {
+    const found = await prisma.post.findUnique({ where: { slug: candidate } });
+    if (!found || (excludeId && found.id === excludeId)) return candidate;
+    candidate = `${baseSlug}-${i}`;
+    i += 1;
+  }
+}
 
 function makeExcerptFromAbstract(abstract: string) {
   return abstract.trim().split(/\s+/).filter(Boolean).slice(0, 50).join(" ");
