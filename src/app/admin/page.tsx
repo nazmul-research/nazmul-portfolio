@@ -1008,6 +1008,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <UrlImagePreview inputId="site-avatar-url" />
               </div>
               <BioField initial={settings?.bio ?? ""} />
+              <div className="md:col-span-2">
+                <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60" />
+              </div>
             </div>
           </details>
 
@@ -1027,6 +1030,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input name="stat3Desc" defaultValue={(settings as unknown as { stat3Desc?: string })?.stat3Desc ?? "Remote-first execution"} placeholder="Card 3 description" className="rounded-lg border px-3 py-2" />
 
               <input name="marqueeItems" defaultValue={(settings as unknown as { marqueeItems?: string })?.marqueeItems ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely"} placeholder="Marquee items separated by |" className="rounded-lg border px-3 py-2 md:col-span-3" />
+              <div className="md:col-span-3">
+                <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60" />
+              </div>
             </div>
           </details>
 
