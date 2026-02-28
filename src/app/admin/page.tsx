@@ -1238,7 +1238,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               defaultSlug={editPost?.slug ?? ""}
               titleInputId="create-post-form-title"
             />
-            <input name="writerName" defaultValue={editPost?.writerName ?? ""} placeholder="Writer name" className="w-full rounded-lg border px-3 py-2" required />
+            <div className="max-w-xs">
+              <input name="writerName" defaultValue={editPost?.writerName ?? ""} placeholder="Writer name" className="w-full rounded-lg border px-3 py-2 text-sm" required />
+            </div>
             <div className="space-y-2">
               <input id="create-post-tags" name="tags" defaultValue={editPost?.tags ?? ""} placeholder="Tags" className="w-full rounded-lg border px-3 py-2" />
               <AutoTagsButton titleInputId="create-post-form-title" contentInputId="create-post-content" tagsInputId="create-post-tags" />
