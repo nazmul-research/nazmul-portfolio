@@ -144,6 +144,20 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
+
+function extractFirstImageFromContent(content: string) {
+  const md = content.match(/!\[[^\]]*\]\(([^)\s]+)\)/i);
+  if (md?.[1]) return md[1];
+
+  const html = content.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+  if (html?.[1]) return html[1];
+
+  const plain = content.match(/(^|\n)((?:https?:\/\/|\/)[^\s]+\.(?:png|jpe?g|gif|webp|svg)(?:\?[^\s]*)?)(?=\n|$)/i);
+  if (plain?.[2]) return plain[2];
+
+  return null;
+}
+
 async function saveSettings(formData: FormData) {
   "use server";
 
@@ -468,6 +482,12 @@ async function createPost(formData: FormData) {
   const slugBase = slugInput || slugify(parsed.data.title) || `post-${Math.floor(Math.random() * 9999)}`;
   const slug = await ensureUniquePostSlug(slugBase);
 
+  const inferredImage = normalizeUrl(extractFirstImageFromContent(parsed.data.content));
+  const explicitImage = normalizeUrl(parsed.data.imageUrl);
+  const latestAsset = (!explicitImage && !inferredImage)
+    ? await prisma.mediaAsset.findFirst({ orderBy: { createdAt: "desc" } })
+    : null;
+
   await prisma.post.create({
     data: {
       title: parsed.data.title,
@@ -477,7 +497,7 @@ async function createPost(formData: FormData) {
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
-      imageUrl: normalizeUrl(parsed.data.imageUrl),
+      imageUrl: explicitImage || inferredImage || latestAsset?.url || null,
       published: parsed.data.published,
       publishAt: normalizeDateTime(parsed.data.publishAt),
       deletedAt: null,
@@ -515,6 +535,12 @@ async function updatePost(formData: FormData) {
   const slugInput = slugify(String(formData.get("slug") || ""));
   const nextSlug = slugInput ? await ensureUniquePostSlug(slugInput, id) : undefined;
 
+  const inferredImage = normalizeUrl(extractFirstImageFromContent(parsed.data.content));
+  const explicitImage = normalizeUrl(parsed.data.imageUrl);
+  const latestAsset = (!explicitImage && !inferredImage)
+    ? await prisma.mediaAsset.findFirst({ orderBy: { createdAt: "desc" } })
+    : null;
+
   await prisma.post.update({
     where: { id },
     data: {
@@ -525,7 +551,7 @@ async function updatePost(formData: FormData) {
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
-      imageUrl: normalizeUrl(parsed.data.imageUrl),
+      imageUrl: explicitImage || inferredImage || latestAsset?.url || null,
       published: parsed.data.published,
       publishAt: normalizeDateTime(parsed.data.publishAt),
     },
