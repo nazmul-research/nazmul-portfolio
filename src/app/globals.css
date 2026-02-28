@@ -215,3 +215,7 @@ h1,h2,h3,.display-font {
   background: linear-gradient(to bottom, rgba(11,13,18,0), rgba(11,13,18,0.9));
   pointer-events: none;
 }
+
+
+html[data-reading="compact"] article { line-height: 1.5 !important; }
+html[data-reading="compact"] article p { margin-top: .55rem !important; }

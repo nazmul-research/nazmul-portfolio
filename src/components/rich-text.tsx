@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 type Props = {
   content: string;
   light?: boolean;
@@ -110,6 +112,7 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
 }
 
 export default function RichText({ content, light = false }: Props) {
+  const [copiedKey, setCopiedKey] = useState("");
   const lines = content.split(/\r?\n/);
   const headingClass = light ? "text-zinc-900" : "text-white";
   const bodyClass = light ? "text-zinc-700" : "text-zinc-200";
@@ -135,31 +138,30 @@ export default function RichText({ content, light = false }: Props) {
       }
       if (i < lines.length && lines[i].trim().startsWith("```")) i += 1;
       const codeText = codeLines.join("\n");
+      const codeLinesWithNo = codeText.split("\n").map((ln, n) => `${String(n + 1).padStart(2, " ")}  ${ln}`).join("\n");
+      const codeKey = `code-${i}`;
       blocks.push(
         <div key={`code-wrap-${i}`} className="relative my-4">
           <button
             type="button"
             className="absolute right-2 top-2 z-10 rounded border border-white/20 bg-black/50 px-2 py-1 text-xs text-white hover:bg-black/70"
-            onClick={async (e) => {
+            onClick={async () => {
               try {
                 await navigator.clipboard.writeText(codeText);
-                const btn = e.currentTarget as HTMLButtonElement;
-                const prev = btn.textContent;
-                btn.textContent = "Copied";
-                setTimeout(() => {
-                  btn.textContent = prev || "Copy";
-                }, 1200);
+                setCopiedKey(codeKey);
+                setTimeout(() => setCopiedKey(""), 1200);
               } catch {
                 // ignore copy error
               }
             }}
           >
-            Copy
+            {copiedKey === codeKey ? "Copied" : "Copy"}
           </button>
           <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-4">
-            {lang ? <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">{lang}</div> : null}
-            <code className="font-mono text-sm text-zinc-100">{codeText}</code>
+            {lang ? <div className="mb-2 text-right text-[11px] uppercase tracking-wide text-zinc-400">{lang}</div> : null}
+            <code className="font-mono text-sm text-zinc-100">{codeLinesWithNo}</code>
           </pre>
+          {copiedKey === codeKey && <div className="mt-2 text-xs text-emerald-300">Copied to clipboard</div>}
         </div>,
       );
       continue;

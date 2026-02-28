@@ -5,6 +5,9 @@ import RichText from "@/components/rich-text";
 import CoverSlider from "@/components/cover-slider";
 import ReadingProgress from "@/components/reading-progress";
 import StickyToc from "@/components/sticky-toc";
+import ReadingComfortToggle from "@/components/reading-comfort-toggle";
+import ShareRow from "@/components/share-row";
+import PostImageLightbox from "@/components/post-image-lightbox";
 
 export const dynamic = "force-dynamic";
 
@@ -112,13 +115,17 @@ export default async function BlogPostPage({
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-7">
               <p className="mb-2 text-xs uppercase tracking-wide text-zinc-200">{post.category === "personal" ? "Personal" : "Technical"} • {readTime(post.content)} min read</p>
               <h1 className="text-3xl font-bold text-white md:text-5xl">{post.title}</h1>
-              <p className="mt-2 text-sm text-zinc-200">{post.writerName || "Nazmul"} • {new Date(post.createdAt).toLocaleDateString()}</p>
+              <p className="mt-2 text-sm text-zinc-200">{post.writerName || "Nazmul"} • Published {new Date(post.createdAt).toLocaleDateString()} • Updated {new Date(post.updatedAt).toLocaleDateString()}</p>
             </div>
           </section>
+
+          <div className="mt-4 flex flex-wrap gap-2"><ReadingComfortToggle /><PostImageLightbox images={coverImages} /></div>
 
           <article className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-sm">
             <RichText content={post.content} />
           </article>
+
+          <ShareRow title={post.title} />
 
           <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
             <div className="grid gap-3 md:grid-cols-2">
