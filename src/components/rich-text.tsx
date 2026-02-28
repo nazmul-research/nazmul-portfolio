@@ -25,12 +25,14 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
       parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{line.slice(last, m.index)}</span>);
     }
     parts.push(
-      <img
-        key={`${keyPrefix}-i-${idx++}`}
-        src={m[2]}
-        alt={m[1] || "inline image"}
-        className="my-3 w-full rounded-xl border border-white/10 object-cover"
-      />,
+      <figure key={`${keyPrefix}-i-${idx++}`} className="my-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm">
+        <img
+          src={m[2]}
+          alt={m[1] || "inline image"}
+          className="w-full object-cover"
+          loading="lazy"
+        />
+      </figure>,
     );
     last = regex.lastIndex;
   }

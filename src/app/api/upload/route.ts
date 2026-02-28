@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const dataUrl = `data:${file.type};base64,${base64}`;
 
   const asset = await prisma.mediaAsset.create({ data: { url: dataUrl } });
-  return NextResponse.json({ id: asset.id, url: asset.url });
+  return NextResponse.json({ id: asset.id, url: `/api/media/${asset.id}`, rawUrl: asset.url });
 }
 
 export async function DELETE(req: Request) {
