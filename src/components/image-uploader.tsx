@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 
 type Props = {
@@ -38,8 +38,14 @@ async function cropToBlob(src: string, pixels: Area): Promise<Blob> {
   return blob;
 }
 
+function getMediaIdFromUrl(url: string) {
+  const m = url.match(/\/api\/media\/([^/?#]+)/);
+  return m?.[1] || null;
+}
+
 export default function ImageUploader({ targetInputId, uploadContext = "blog" }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [initialValue, setInitialValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -50,8 +56,16 @@ export default function ImageUploader({ targetInputId, uploadContext = "blog" }:
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    const input = document.getElementById(targetInputId) as HTMLInputElement | null;
+    if (!input) return;
+    const current = String(input.value || "").trim();
+    setInitialValue(current);
+    setPreview(current || null);
+  }, [targetInputId]);
+
   function applyValue(value: string) {
-    setPreview(value);
+    setPreview(value || null);
     const input = document.getElementById(targetInputId) as HTMLInputElement | null;
     if (input) {
       input.value = value;
@@ -96,6 +110,28 @@ export default function ImageUploader({ targetInputId, uploadContext = "blog" }:
     }
   }
 
+  async function deleteCurrent() {
+    const current = preview || "";
+    const id = getMediaIdFromUrl(current);
+    if (id) {
+      try {
+        await fetch(`/api/upload?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      } catch {
+        // best-effort delete
+      }
+    }
+    applyValue("");
+    setFileName("");
+    setError(null);
+  }
+
+  function resetCurrent() {
+    applyValue(initialValue);
+    setFileName("");
+    setError(null);
+    setSource(null);
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-xs">
@@ -115,10 +151,12 @@ export default function ImageUploader({ targetInputId, uploadContext = "blog" }:
           if (file) void handlePick(file);
         }}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700" onClick={() => fileRef.current?.click()}>
           Cover image upload
         </button>
+        <button type="button" className="btn-secondary" onClick={resetCurrent}>Reset</button>
+        <button type="button" className="btn-danger" onClick={() => void deleteCurrent()}>Delete</button>
         <span className="truncate text-xs text-zinc-500">{fileName || "No file chosen"}</span>
       </div>
 
