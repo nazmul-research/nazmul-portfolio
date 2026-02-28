@@ -52,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Navbar />
         {children}
+        <footer className="mt-12 border-t border-white/10 py-6 text-center text-sm text-zinc-400">© 2026 Nazmul</footer>
 
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
