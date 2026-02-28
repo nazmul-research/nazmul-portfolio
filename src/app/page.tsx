@@ -162,7 +162,7 @@ export default async function HomePage() {
             <div className="glass-card rounded-2xl p-5 text-zinc-300 md:col-span-3">Projects are being curated. Check back soon.</div>
           ) : (
             projects.map((p) => (
-              <Link key={p.id} href={`/projects#${p.slug}`} className="group glass-card rounded-2xl p-5 transition hover:-translate-y-1 hover:bg-white/[0.05]">
+              <Link key={p.id} href={`/projects/${p.slug}`} className="group glass-card rounded-2xl p-5 transition hover:-translate-y-1 hover:bg-white/[0.05]">
                 {p.imageUrl && (
                   <Image
                     src={p.imageUrl}
