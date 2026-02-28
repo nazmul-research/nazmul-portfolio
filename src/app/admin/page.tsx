@@ -901,6 +901,47 @@ async function createPublication(formData: FormData) {
   redirect("/admin?panel=research&status=publication-added");
 }
 
+async function updatePublication(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") || "").trim();
+  if (!id) adminRedirect("publication-invalid");
+
+  const parsed = publicationSchema.safeParse({
+    title: String(formData.get("title") || ""),
+    authors: String(formData.get("authors") || ""),
+    venue: String(formData.get("venue") || ""),
+    year: String(formData.get("year") || ""),
+    url: String(formData.get("url") || ""),
+    abstract: String(formData.get("abstract") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
+    published: asBool(formData.get("published")),
+  });
+
+  if (!parsed.success) adminRedirect("publication-invalid");
+
+  const normalizedAbstract = cleanOptional(parsed.data.abstract);
+  const normalizedExcerpt = cleanOptional(parsed.data.excerpt) || (normalizedAbstract ? makeExcerptFromAbstract(normalizedAbstract) : null);
+
+  await prisma.publication.update({
+    where: { id },
+    data: {
+      title: parsed.data.title,
+      authors: parsed.data.authors,
+      venue: parsed.data.venue,
+      year: parsed.data.year,
+      url: normalizeUrl(parsed.data.url),
+      abstract: normalizedAbstract,
+      excerpt: normalizedExcerpt,
+      published: parsed.data.published,
+    },
+  });
+
+  revalidatePath("/research");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "publication.update", targetType: "publication", targetId: id });
+  redirect("/admin?panel=research&status=publication-updated");
+}
+
 async function deletePublication(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "").trim();
@@ -955,6 +996,7 @@ const statusText: Record<string, string> = {
   "avatar-cleared": "✅ Profile avatar cleared",
   "publication-added": "✅ Publication added",
   "publication-deleted": "✅ Publication deleted",
+  "publication-updated": "✅ Publication updated",
   "publication-invalid": "⚠️ Publication form invalid",
   "publication-delete-failed": "⚠️ Could not delete publication", 
 };
@@ -1008,6 +1050,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const scope = typeof resolvedParams.scope === "string" ? resolvedParams.scope : "active";
   const panel = typeof resolvedParams.panel === "string" ? resolvedParams.panel : "site";
   const editProjectId = typeof resolvedParams.editProjectId === "string" ? resolvedParams.editProjectId : "";
+  const editPublicationId = typeof resolvedParams.editPublicationId === "string" ? resolvedParams.editPublicationId : "";
   const rawBlogView = typeof resolvedParams.blogView === "string" ? resolvedParams.blogView : "create";
   const blogView = ["create", "draft", "published", "trash"].includes(rawBlogView) ? rawBlogView : "create";
   const editId = typeof resolvedParams.editId === "string" ? resolvedParams.editId : "";
@@ -1111,6 +1154,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const editProject = panel === "projects" && editProjectId
     ? await prisma.project.findFirst({ where: { id: editProjectId, deletedAt: null } })
+    : null;
+
+  const editPublication = panel === "research" && editPublicationId
+    ? await prisma.publication.findFirst({ where: { id: editPublicationId } })
     : null;
 
   const editPost = panel === "blog" && editId
@@ -1536,20 +1583,24 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <h2 className="text-xl font-semibold">Research Publications</h2>
         <p className="mt-1 text-sm text-zinc-500">Add or delete publications for the public research page.</p>
 
-        <form action={createPublication} className="mt-4 grid gap-3 md:grid-cols-2">
-          <input name="title" placeholder="Publication title" className="rounded-lg border px-3 py-2 md:col-span-2" required />
-          <input name="authors" placeholder="Authors" className="rounded-lg border px-3 py-2 md:col-span-2" required />
-          <input name="venue" placeholder="Venue / Journal / Conference" className="rounded-lg border px-3 py-2" required />
-          <input name="year" type="number" placeholder="Year" className="rounded-lg border px-3 py-2" required />
-          <input name="url" type="text" placeholder="Publication URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <textarea id="publication-abstract" name="abstract" placeholder="Abstract" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" />
-          <textarea id="publication-excerpt" name="excerpt" placeholder="Short excerpt (shown on Research page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
+        <form action={editPublication ? updatePublication : createPublication} className="mt-4 grid gap-3 md:grid-cols-2">
+          {editPublication && <input type="hidden" name="id" value={editPublication.id} />}
+          <input name="title" defaultValue={editPublication?.title ?? ""} placeholder="Publication title" className="rounded-lg border px-3 py-2 md:col-span-2" required />
+          <input name="authors" defaultValue={editPublication?.authors ?? ""} placeholder="Authors" className="rounded-lg border px-3 py-2 md:col-span-2" required />
+          <input name="venue" defaultValue={editPublication?.venue ?? ""} placeholder="Venue / Journal / Conference" className="rounded-lg border px-3 py-2" required />
+          <input name="year" type="number" defaultValue={editPublication?.year ?? ""} placeholder="Year" className="rounded-lg border px-3 py-2" required />
+          <input name="url" type="text" defaultValue={editPublication?.url ?? ""} placeholder="Publication URL (optional)" className="rounded-lg border px-3 py-2 md:col-span-2" />
+          <textarea id="publication-abstract" name="abstract" defaultValue={editPublication?.abstract ?? ""} placeholder="Abstract" className="min-h-24 rounded-lg border px-3 py-2 md:col-span-2" />
+          <textarea id="publication-excerpt" name="excerpt" defaultValue={editPublication?.excerpt ?? ""} placeholder="Short excerpt (shown on Research page)" className="min-h-20 rounded-lg border px-3 py-2 md:col-span-2" />
           <div className="md:col-span-2"><PublicationExcerptTool abstractId="publication-abstract" excerptId="publication-excerpt" /></div>
           <div className="md:col-span-2 flex flex-wrap gap-4">
             <label className="text-sm"><input type="checkbox" name="featured" defaultChecked={editProject?.featured ?? false} /> Feature on home page</label>
             <label className="text-sm"><input type="checkbox" name="published" defaultChecked={editProject ? editProject.published : true} /> Published</label>
           </div>
-          <SubmitButton idleText="Add Publication" pendingText="Adding..." className="btn-primary w-fit" />
+          <div className="flex flex-wrap gap-2 md:col-span-2">
+          <SubmitButton idleText={editPublication ? "Save Changes" : "Add Publication"} pendingText={editPublication ? "Saving..." : "Adding..."} className="btn-primary w-fit" />
+          {editPublication && <a href="/admin?panel=research" className="btn-secondary">Clear edit mode</a>}
+        </div>
         </form>
 
         <div className="mt-6 space-y-3">
@@ -1560,6 +1611,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <p className="text-sm text-zinc-600">{pub.authors}</p>
               <p className="text-xs text-zinc-500">{pub.venue} • {pub.year}</p>
               <div className="mt-2 flex gap-2">
+                <a href={`/admin?panel=research&editPublicationId=${pub.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
                 {pub.url && <a href={pub.url} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Open</a>}
                 <form action={deletePublication}>
                   <input type="hidden" name="id" value={pub.id} />
