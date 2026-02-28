@@ -102,6 +102,19 @@ function normalizeEmail(value: string | null | undefined) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw) ? raw : null;
 }
 
+function normalizeWhatsApp(value: string | null | undefined) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    return normalizeUrl(raw);
+  }
+
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return null;
+  return `https://wa.me/${digits}`;
+}
+
 function normalizeDateTime(value: string | null | undefined) {
   const raw = String(value || "").trim();
   if (!raw) return null;
@@ -174,7 +187,7 @@ async function saveSettings(formData: FormData) {
       linkedinUrl: normalizeUrl(parsed.data.linkedinUrl),
       githubUrl: normalizeUrl(parsed.data.githubUrl),
       githubUrl2: normalizeUrl(parsed.data.githubUrl2),
-      whatsappUrl: normalizeUrl(parsed.data.whatsappUrl),
+      whatsappUrl: normalizeWhatsApp(parsed.data.whatsappUrl),
       scholarUrl: normalizeUrl(parsed.data.scholarUrl),
       researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
@@ -200,7 +213,7 @@ async function saveSettings(formData: FormData) {
       linkedinUrl: normalizeUrl(parsed.data.linkedinUrl),
       githubUrl: normalizeUrl(parsed.data.githubUrl),
       githubUrl2: normalizeUrl(parsed.data.githubUrl2),
-      whatsappUrl: normalizeUrl(parsed.data.whatsappUrl),
+      whatsappUrl: normalizeWhatsApp(parsed.data.whatsappUrl),
       scholarUrl: normalizeUrl(parsed.data.scholarUrl),
       researchGateUrl: normalizeUrl(parsed.data.researchGateUrl),
       avatarUrl: normalizeUrl(parsed.data.avatarUrl),
