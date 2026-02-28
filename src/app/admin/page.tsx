@@ -9,7 +9,6 @@ import { redirect } from "next/navigation";
 import SubmitButton from "@/components/submit-button";
 import ConfirmSubmitButton from "@/components/confirm-submit-button";
 import ImageUploader from "@/components/image-uploader";
-import FormDraftAssist from "@/components/form-draft-assist";
 import LivePreviewTextarea from "@/components/live-preview-textarea";
 import UrlImagePreview from "@/components/url-image-preview";
 import MultiImageUploader from "@/components/multi-image-uploader";
@@ -1316,7 +1315,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
           <SubmitButton idleText="Add Project" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
           </form>
-          <div className="mt-2"><FormDraftAssist formId="create-project-form" storageKey="admin-create-project-draft" /></div>
+
         </details>
 
         <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
