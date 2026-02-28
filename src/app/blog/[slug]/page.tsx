@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RichText from "@/components/rich-text";
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPostPage({
   params,
   searchParams,

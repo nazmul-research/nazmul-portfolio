@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPage() {
   const now = new Date();
   const posts = await prisma.post.findMany({
