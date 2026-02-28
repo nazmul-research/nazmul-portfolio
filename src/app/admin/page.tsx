@@ -449,7 +449,8 @@ async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
 async function createPost(formData: FormData) {
   "use server";
 
-  const intent = String(formData.get("intent") || "");
+  const intents = formData.getAll("intent").map((v) => String(v));
+  const intent = intents[intents.length - 1] || "";
   const publishRequested = intent === "publish";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
@@ -498,7 +499,8 @@ async function updatePost(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   if (!id) adminRedirect("post-update-failed");
 
-  const intent = String(formData.get("intent") || "");
+  const intents = formData.getAll("intent").map((v) => String(v));
+  const intent = intents[intents.length - 1] || "";
   const publishRequested = intent === "publish";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
@@ -1249,7 +1251,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
           <form id="create-post-form" action={editPost ? updatePost : createPost} className="mt-3 grid gap-3 md:grid-cols-2">
             {editPost && <input type="hidden" name="id" value={editPost.id} />}
-            <input type="hidden" name="intent" value={editPost?.published ? "publish" : "draft"} />
             <SlugHelper
               titleName="title"
               slugName="slug"
@@ -1334,6 +1335,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   ) : (
                     <>
                       <a href={`/admin?panel=blog&blogView=create&editId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
+                      <a href={`/blog/${p.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Full preview</a>
                       <form action={deletePost}>
                         <input type="hidden" name="id" value={p.id} />
                         <input type="hidden" name="fromView" value={blogView} />
