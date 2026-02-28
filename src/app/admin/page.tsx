@@ -1249,6 +1249,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
           <form id="create-post-form" action={editPost ? updatePost : createPost} className="mt-3 grid gap-3 md:grid-cols-2">
             {editPost && <input type="hidden" name="id" value={editPost.id} />}
+            <input type="hidden" name="intent" value={editPost?.published ? "publish" : "draft"} />
             <SlugHelper
               titleName="title"
               slugName="slug"
