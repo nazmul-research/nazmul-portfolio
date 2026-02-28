@@ -115,7 +115,7 @@ export default function ImageUploader({ targetInputId }: Props) {
       />
       <div className="flex items-center gap-2">
         <button type="button" className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700" onClick={() => fileRef.current?.click()}>
-          Choose image
+          Cover image upload
         </button>
         <span className="truncate text-xs text-zinc-500">{fileName || "No file chosen"}</span>
       </div>

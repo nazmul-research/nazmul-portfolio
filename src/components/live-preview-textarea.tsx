@@ -16,6 +16,7 @@ export default function LivePreviewTextarea({
 }) {
   const [value, setValue] = useState(defaultValue);
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   function insert(snippet: string) {
     const el = ref.current;
@@ -27,13 +28,25 @@ export default function LivePreviewTextarea({
     requestAnimationFrame(() => {
       el.focus();
       el.selectionStart = el.selectionEnd = start + snippet.length;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
     });
   }
 
-  function insertImageMarkdown() {
+  function insertImageMarkdownUrl() {
     const url = window.prompt("Paste image URL for inline post image:", "https://");
     if (!url) return;
     insert(`\n![inline image](${url})\n`);
+  }
+
+  async function uploadInlineImage(file: File) {
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body });
+    const raw = await res.text();
+    const data = raw ? JSON.parse(raw) : {};
+    if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
+    insert(`\n![inline image](${data.url})\n`);
   }
 
   return (
@@ -45,11 +58,30 @@ export default function LivePreviewTextarea({
           <button type="button" onClick={() => insert("- Bullet item\n")} className="rounded border px-2 py-1">• List</button>
           <button type="button" onClick={() => insert("1. Numbered item\n")} className="rounded border px-2 py-1">1. List</button>
           <button type="button" onClick={() => insert("\n> Quote\n")} className="rounded border px-2 py-1">Quote</button>
-          <button type="button" onClick={insertImageMarkdown} className="rounded border px-2 py-1">Inline Image</button>
+          <button type="button" onClick={insertImageMarkdownUrl} className="rounded border px-2 py-1">Inline Image URL</button>
+          <button type="button" onClick={() => fileRef.current?.click()} className="rounded border px-2 py-1">Inline Image Upload</button>
           <button type="button" onClick={() => insert("🔥")} className="rounded border px-2 py-1">🔥</button>
           <button type="button" onClick={() => insert("🚀")} className="rounded border px-2 py-1">🚀</button>
           <button type="button" onClick={() => insert("🧠")} className="rounded border px-2 py-1">🧠</button>
         </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+              await uploadInlineImage(file);
+            } catch (err) {
+              window.alert(err instanceof Error ? err.message : "Inline image upload failed");
+            }
+            e.currentTarget.value = "";
+          }}
+        />
+
         <textarea
           id={textareaId}
           ref={ref}

@@ -1,10 +1,8 @@
 "use client";
 
-type Props = {
+type BaseProps = {
   titleInputId: string;
   contentInputId: string;
-  excerptInputId: string;
-  tagsInputId: string;
 };
 
 const STOP = new Set([
@@ -28,7 +26,7 @@ const STOP = new Set([
   "this",
 ]);
 
-export default function BlogMetaTools({ titleInputId, contentInputId, excerptInputId, tagsInputId }: Props) {
+export function AutoExcerptButton({ titleInputId, contentInputId, excerptInputId }: BaseProps & { excerptInputId: string }) {
   function generateExcerpt() {
     const titleEl = document.getElementById(titleInputId) as HTMLInputElement | null;
     const contentEl = document.getElementById(contentInputId) as HTMLTextAreaElement | null;
@@ -45,6 +43,14 @@ export default function BlogMetaTools({ titleInputId, contentInputId, excerptInp
     excerptEl.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  return (
+    <button type="button" className="btn-secondary" onClick={generateExcerpt}>
+      Auto-generate Excerpt
+    </button>
+  );
+}
+
+export function AutoTagsButton({ titleInputId, contentInputId, tagsInputId }: BaseProps & { tagsInputId: string }) {
   function generateTags() {
     const titleEl = document.getElementById(titleInputId) as HTMLInputElement | null;
     const contentEl = document.getElementById(contentInputId) as HTMLTextAreaElement | null;
@@ -73,13 +79,8 @@ export default function BlogMetaTools({ titleInputId, contentInputId, excerptInp
   }
 
   return (
-    <div className="md:col-span-2 flex flex-wrap gap-2">
-      <button type="button" className="btn-secondary" onClick={generateExcerpt}>
-        Auto-generate Excerpt
-      </button>
-      <button type="button" className="btn-secondary" onClick={generateTags}>
-        Auto-generate Tags
-      </button>
-    </div>
+    <button type="button" className="btn-secondary" onClick={generateTags}>
+      Auto-generate Tags
+    </button>
   );
 }
