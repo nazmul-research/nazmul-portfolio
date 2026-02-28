@@ -484,9 +484,6 @@ async function createPost(formData: FormData) {
 
   const inferredImage = normalizeUrl(extractFirstImageFromContent(parsed.data.content));
   const explicitImage = normalizeUrl(parsed.data.imageUrl);
-  const latestAsset = (!explicitImage && !inferredImage)
-    ? await prisma.mediaAsset.findFirst({ orderBy: { createdAt: "desc" } })
-    : null;
 
   await prisma.post.create({
     data: {
@@ -497,7 +494,7 @@ async function createPost(formData: FormData) {
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
-      imageUrl: explicitImage || inferredImage || latestAsset?.url || null,
+      imageUrl: explicitImage || inferredImage || null,
       published: parsed.data.published,
       publishAt: normalizeDateTime(parsed.data.publishAt),
       deletedAt: null,
@@ -537,9 +534,6 @@ async function updatePost(formData: FormData) {
 
   const inferredImage = normalizeUrl(extractFirstImageFromContent(parsed.data.content));
   const explicitImage = normalizeUrl(parsed.data.imageUrl);
-  const latestAsset = (!explicitImage && !inferredImage)
-    ? await prisma.mediaAsset.findFirst({ orderBy: { createdAt: "desc" } })
-    : null;
 
   await prisma.post.update({
     where: { id },
@@ -551,7 +545,7 @@ async function updatePost(formData: FormData) {
       excerpt: parsed.data.excerpt,
       content: parsed.data.content,
       tags: cleanOptional(parsed.data.tags),
-      imageUrl: explicitImage || inferredImage || latestAsset?.url || null,
+      imageUrl: explicitImage || inferredImage || null,
       published: parsed.data.published,
       publishAt: normalizeDateTime(parsed.data.publishAt),
     },
@@ -1320,7 +1314,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <AutoTagsButton titleInputId="create-post-form-title" contentInputId="create-post-content" tagsInputId="create-post-tags" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <input id="post-image-url" type="url" name="imageUrl" defaultValue={editPost?.imageUrl ?? ""} placeholder="Cover image URL" className="w-full rounded-lg border px-3 py-2" />
+              <input id="post-image-url" type="text" name="imageUrl" defaultValue={editPost?.imageUrl ?? ""} placeholder="Cover image URL or /api/media/..." className="w-full rounded-lg border px-3 py-2" />
               <ImageUploader targetInputId="post-image-url" />
               <UrlImagePreview inputId="post-image-url" />
             </div>
