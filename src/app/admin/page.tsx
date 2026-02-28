@@ -449,8 +449,7 @@ async function ensureUniquePostSlug(baseSlug: string, excludeId?: string) {
 async function createPost(formData: FormData) {
   "use server";
 
-  const publishedValues = formData.getAll("published").map((v) => String(v));
-  const publishRequested = publishedValues[publishedValues.length - 1] === "true";
+  const publishRequested = String(formData.get("published") || "false") === "true";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
@@ -498,8 +497,7 @@ async function updatePost(formData: FormData) {
   const id = String(formData.get("id") || "").trim();
   if (!id) adminRedirect("post-update-failed");
 
-  const publishedValues = formData.getAll("published").map((v) => String(v));
-  const publishRequested = publishedValues[publishedValues.length - 1] === "true";
+  const publishRequested = String(formData.get("published") || "false") === "true";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
@@ -538,6 +536,30 @@ async function updatePost(formData: FormData) {
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.update", targetType: "post", targetId: id });
   blogRedirect("post-updated", publishRequested ? "published" : "draft");
+}
+
+async function createPostPublish(formData: FormData) {
+  "use server";
+  formData.set("published", "true");
+  await createPost(formData);
+}
+
+async function createPostDraft(formData: FormData) {
+  "use server";
+  formData.set("published", "false");
+  await createPost(formData);
+}
+
+async function updatePostPublish(formData: FormData) {
+  "use server";
+  formData.set("published", "true");
+  await updatePost(formData);
+}
+
+async function updatePostDraft(formData: FormData) {
+  "use server";
+  formData.set("published", "false");
+  await updatePost(formData);
 }
 
 async function deletePost(formData: FormData) {
@@ -1291,8 +1313,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <WriterStatus contentInputId="create-post-content" />
             <PublishChecklist titleId="create-post-form-title" excerptId="create-post-excerpt" tagsId="create-post-tags" contentId="create-post-content" />
             <div className="flex flex-wrap gap-2 md:col-span-2">
-              <button type="submit" name="published" value="true" className="btn-primary">Publish post</button>
-              <button type="submit" name="published" value="false" className="btn-secondary">Save as draft</button>
+              <button type="submit" formAction={editPost ? updatePostPublish : createPostPublish} className="btn-primary">Publish post</button>
+              <button type="submit" formAction={editPost ? updatePostDraft : createPostDraft} className="btn-secondary">Save as draft</button>
               {editPost ? (
                 <a href={`/blog/${editPost.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">Full preview</a>
               ) : (
