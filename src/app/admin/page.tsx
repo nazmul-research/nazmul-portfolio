@@ -171,6 +171,10 @@ function blogRedirect(status: string, blogView: string): never {
   redirect(`/admin?panel=blog&blogView=${safeView}&status=${status}`);
 }
 
+function projectRedirect(status: string): never {
+  redirect(`/admin?panel=projects&status=${status}`);
+}
+
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
@@ -340,7 +344,7 @@ async function createProject(formData: FormData) {
     published: asBool(formData.get("published")),
   });
 
-  if (!parsed.success) adminRedirect("project-invalid");
+  if (!parsed.success) projectRedirect("project-invalid");
 
   const slugInput = slugify(String(formData.get("slug") || ""));
   const slug = slugInput || `${slugify(parsed.data.title)}-${Math.floor(Math.random() * 9999)}`;
@@ -374,14 +378,14 @@ async function createProject(formData: FormData) {
   revalidatePath("/projects");
   revalidatePath("/admin");
   await writeAuditLog({ action: "project.create", targetType: "project", targetId: slug });
-  adminRedirect("project-added");
+  projectRedirect("project-added");
 }
 
 async function updateProject(formData: FormData) {
   "use server";
 
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("project-update-failed");
+  if (!id) projectRedirect("project-update-failed");
 
   const parsed = projectSchema.safeParse({
     title: String(formData.get("title") || ""),
@@ -393,7 +397,7 @@ async function updateProject(formData: FormData) {
     published: asBool(formData.get("published")),
   });
 
-  if (!parsed.success) adminRedirect("project-invalid");
+  if (!parsed.success) projectRedirect("project-invalid");
 
   const slugInput = slugify(String(formData.get("slug") || ""));
   if (slugInput) {
@@ -427,33 +431,33 @@ async function updateProject(formData: FormData) {
   revalidatePath("/projects");
   revalidatePath("/admin");
   await writeAuditLog({ action: "project.update", targetType: "project", targetId: id });
-  adminRedirect("project-updated");
+  projectRedirect("project-updated");
 }
 
 async function deleteProject(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("project-delete-failed");
+  if (!id) projectRedirect("project-delete-failed");
 
   await prisma.project.update({ where: { id }, data: { deletedAt: new Date() } });
   revalidatePath("/");
   revalidatePath("/projects");
   revalidatePath("/admin");
   await writeAuditLog({ action: "project.trash", targetType: "project", targetId: id });
-  adminRedirect("project-trashed");
+  projectRedirect("project-trashed");
 }
 
 async function restoreProject(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("project-restore-failed");
+  if (!id) projectRedirect("project-restore-failed");
 
   await prisma.project.update({ where: { id }, data: { deletedAt: null } });
   revalidatePath("/");
   revalidatePath("/projects");
   revalidatePath("/admin");
   await writeAuditLog({ action: "project.restore", targetType: "project", targetId: id });
-  adminRedirect("project-restored");
+  projectRedirect("project-restored");
 }
 
 async function hardDeleteProject(formData: FormData) {
@@ -463,14 +467,14 @@ async function hardDeleteProject(formData: FormData) {
   if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
 
   const id = String(formData.get("id") || "").trim();
-  if (!id) adminRedirect("project-delete-failed");
+  if (!id) projectRedirect("project-delete-failed");
 
   await prisma.project.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/projects");
   revalidatePath("/admin");
   await writeAuditLog({ action: "project.delete", targetType: "project", targetId: id });
-  adminRedirect("project-deleted");
+  projectRedirect("project-deleted");
 }
 
 async function toggleProjectPublish(formData: FormData) {
