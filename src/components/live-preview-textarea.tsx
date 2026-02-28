@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import RichText from "@/components/rich-text";
 
 export default function LivePreviewTextarea({
@@ -8,13 +8,18 @@ export default function LivePreviewTextarea({
   placeholder,
   defaultValue = "",
   textareaId,
+  formId,
+  autosaveKey,
 }: {
   name: string;
   placeholder?: string;
   defaultValue?: string;
   textareaId?: string;
+  formId?: string;
+  autosaveKey?: string;
 }) {
   const [value, setValue] = useState(defaultValue);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -49,6 +54,57 @@ export default function LivePreviewTextarea({
     insert(`\n![inline image](${data.url})\n`);
   }
 
+  useEffect(() => {
+    if (!autosaveKey) return;
+    try {
+      const raw = localStorage.getItem(autosaveKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { value?: string; ts?: number };
+        if (typeof parsed.value === "string" && parsed.value.length > 0) setValue(parsed.value);
+        if (typeof parsed.ts === "number") setSavedAt(parsed.ts);
+      }
+    } catch {
+      // ignore
+    }
+  }, [autosaveKey]);
+
+  useEffect(() => {
+    if (!autosaveKey) return;
+    const t = setTimeout(() => {
+      localStorage.setItem(autosaveKey, JSON.stringify({ value, ts: Date.now() }));
+      setSavedAt(Date.now());
+    }, 500);
+    return () => clearTimeout(t);
+  }, [value, autosaveKey]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const cmd = e.ctrlKey || e.metaKey;
+      if (!cmd) return;
+
+      if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        const form = formId ? (document.getElementById(formId) as HTMLFormElement | null) : null;
+        if (form) form.requestSubmit();
+      }
+
+      if (e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        insert("**bold text**");
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const snippets = [
+    "## Key takeaway\n",
+    "## Why this matters\n",
+    "## Implementation notes\n",
+    "### Final thoughts\n",
+  ];
+
   return (
     <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
       <div>
@@ -63,6 +119,9 @@ export default function LivePreviewTextarea({
           <button type="button" onClick={() => insert("🔥")} className="rounded border px-2 py-1">🔥</button>
           <button type="button" onClick={() => insert("🚀")} className="rounded border px-2 py-1">🚀</button>
           <button type="button" onClick={() => insert("🧠")} className="rounded border px-2 py-1">🧠</button>
+          {snippets.map((s) => (
+            <button key={s} type="button" onClick={() => insert(`\n${s}`)} className="rounded border px-2 py-1">Snippet</button>
+          ))}
         </div>
 
         <input
@@ -92,6 +151,10 @@ export default function LivePreviewTextarea({
           className="min-h-56 w-full rounded-lg border px-3 py-2"
           required
         />
+
+        <p className="mt-2 text-xs text-zinc-500" suppressHydrationWarning>
+          {savedAt ? `Autosaved ${new Date(savedAt).toLocaleTimeString()}` : "Autosave enabled"} • Shortcuts: Ctrl/Cmd+S save, Ctrl/Cmd+B bold
+        </p>
       </div>
       <div className="min-h-56 rounded-lg border bg-zinc-50 p-3 text-sm">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Live formatted preview</p>
