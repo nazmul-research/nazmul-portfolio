@@ -1318,7 +1318,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               {editPost ? (
                 <a href={`/blog/${editPost.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">Full preview</a>
               ) : (
-                <span className="btn-secondary cursor-not-allowed opacity-60" title="Save as draft first to enable full preview">Full preview</span>
+                <span className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800" title="Save as draft first to enable full preview">
+                  Full preview (save draft first)
+                </span>
               )}
               {editPost && <a href={`/admin?panel=blog&blogView=${blogView === "create" ? "published" : blogView}`} className="btn-secondary">Back to list</a>}
             </div>
