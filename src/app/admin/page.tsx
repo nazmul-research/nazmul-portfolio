@@ -973,13 +973,33 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <h2 className="mb-2 text-xl font-semibold">Site Settings</h2>
         <p className="mb-4 text-sm text-zinc-500">Required: full name, headline, bio. Optional links must be valid URLs.</p>
         <form action={saveSettings} className="grid gap-3 md:grid-cols-2">
-          <input name="fullName" defaultValue={settings?.fullName ?? "Nazmul Islam"} placeholder="Full name" className="rounded-lg border px-3 py-2" required />
-          <input name="headline" defaultValue={settings?.headline ?? "AI • Robotics • Agent Systems"} placeholder="Headline" className="rounded-lg border px-3 py-2" required />
-          <input name="availabilityTag" defaultValue={(settings as unknown as { availabilityTag?: string })?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"} placeholder="Availability tag" className="rounded-lg border px-3 py-2" />
-          <input name="location" defaultValue={settings?.location ?? ""} placeholder="Location" className="rounded-lg border px-3 py-2" />
+          <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
+            <summary className="cursor-pointer text-sm font-medium">First Section</summary>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <input name="fullName" defaultValue={settings?.fullName ?? "Nazmul Islam"} placeholder="Full name" className="rounded-lg border px-3 py-2" required />
+              <input name="headline" defaultValue={settings?.headline ?? "AI • Robotics • Agent Systems"} placeholder="Headline" className="rounded-lg border px-3 py-2" required />
+              <input name="availabilityTag" defaultValue={(settings as unknown as { availabilityTag?: string })?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"} placeholder="Availability tag" className="rounded-lg border px-3 py-2" />
+              <input name="location" defaultValue={settings?.location ?? ""} placeholder="Location" className="rounded-lg border px-3 py-2" />
+
+              <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
+              <input type="url" name="linkedinUrl" defaultValue={settings?.linkedinUrl ?? "https://www.linkedin.com/in/nazmul87/"} placeholder="LinkedIn URL" className="rounded-lg border px-3 py-2" />
+              <input type="url" name="githubUrl" defaultValue={settings?.githubUrl ?? "https://github.com/mdnazmulislam0087"} placeholder="GitHub URL" className="rounded-lg border px-3 py-2" />
+              <input type="url" name="githubUrl2" defaultValue={(settings as unknown as { githubUrl2?: string })?.githubUrl2 ?? ""} placeholder="Second GitHub URL" className="rounded-lg border px-3 py-2" />
+              <input type="url" name="whatsappUrl" defaultValue={(settings as unknown as { whatsappUrl?: string })?.whatsappUrl ?? "https://wa.me/"} placeholder="WhatsApp URL" className="rounded-lg border px-3 py-2" />
+              <input type="url" name="scholarUrl" defaultValue={(settings as unknown as { scholarUrl?: string })?.scholarUrl ?? "https://scholar.google.com/"} placeholder="Google Scholar URL" className="rounded-lg border px-3 py-2" />
+              <input type="url" name="researchGateUrl" defaultValue={(settings as unknown as { researchGateUrl?: string })?.researchGateUrl ?? "https://www.researchgate.net/"} placeholder="ResearchGate URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
+
+              <div className="space-y-2 md:col-span-2">
+                <input id="site-avatar-url" type="hidden" name="avatarUrl" defaultValue={settings?.avatarUrl ?? ""} />
+                <ImageUploader targetInputId="site-avatar-url" />
+                <UrlImagePreview inputId="site-avatar-url" />
+              </div>
+              <BioField initial={settings?.bio ?? ""} />
+            </div>
+          </details>
 
           <details className="md:col-span-2 rounded-lg border border-zinc-200 p-3" open>
-            <summary className="cursor-pointer text-sm font-medium">Hero / Main section</summary>
+            <summary className="cursor-pointer text-sm font-medium">Second Section</summary>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <input name="stat1Label" defaultValue={(settings as unknown as { stat1Label?: string })?.stat1Label ?? "Systems shipped"} placeholder="Card 1 label" className="rounded-lg border px-3 py-2" />
               <input name="stat1Value" defaultValue={(settings as unknown as { stat1Value?: string })?.stat1Value ?? "10+"} placeholder="Card 1 value" className="rounded-lg border px-3 py-2" />
@@ -996,19 +1016,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input name="marqueeItems" defaultValue={(settings as unknown as { marqueeItems?: string })?.marqueeItems ?? "⚡ Autonomous Agents|🤖 Robotics Workflow|🧠 AI Product Engineering|🔁 Automation Systems|📊 Reliability + Observability|🚀 Ship Fast, Scale Safely"} placeholder="Marquee items separated by |" className="rounded-lg border px-3 py-2 md:col-span-3" />
             </div>
           </details>
-          <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="linkedinUrl" defaultValue={settings?.linkedinUrl ?? "https://www.linkedin.com/in/nazmul87/"} placeholder="LinkedIn URL" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="githubUrl" defaultValue={settings?.githubUrl ?? "https://github.com/mdnazmulislam0087"} placeholder="GitHub URL" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="githubUrl2" defaultValue={(settings as unknown as { githubUrl2?: string })?.githubUrl2 ?? ""} placeholder="Second GitHub URL" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="whatsappUrl" defaultValue={(settings as unknown as { whatsappUrl?: string })?.whatsappUrl ?? "https://wa.me/"} placeholder="WhatsApp URL" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="scholarUrl" defaultValue={(settings as unknown as { scholarUrl?: string })?.scholarUrl ?? "https://scholar.google.com/"} placeholder="Google Scholar URL" className="rounded-lg border px-3 py-2" />
-          <input type="url" name="researchGateUrl" defaultValue={(settings as unknown as { researchGateUrl?: string })?.researchGateUrl ?? "https://www.researchgate.net/"} placeholder="ResearchGate URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <div className="space-y-2 md:col-span-2">
-            <input id="site-avatar-url" type="hidden" name="avatarUrl" defaultValue={settings?.avatarUrl ?? ""} />
-            <ImageUploader targetInputId="site-avatar-url" />
-            <UrlImagePreview inputId="site-avatar-url" />
-          </div>
-          <BioField initial={settings?.bio ?? ""} />
+
           <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
         </form>
 
