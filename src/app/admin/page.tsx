@@ -444,6 +444,7 @@ async function createPost(formData: FormData) {
   "use server";
 
   const intent = String(formData.get("intent") || "");
+  const publishRequested = intent === "publish";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
@@ -451,7 +452,7 @@ async function createPost(formData: FormData) {
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
     imageUrl: String(formData.get("imageUrl") || ""),
-    published: intent === "draft" ? false : true,
+    published: publishRequested,
     publishAt: String(formData.get("publishAt") || ""),
   });
 
@@ -480,7 +481,7 @@ async function createPost(formData: FormData) {
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.create", targetType: "post", targetId: slug });
-  adminRedirect("post-added");
+  redirect(`/admin?panel=blog&blogView=${publishRequested ? "published" : "draft"}&status=post-added`);
 }
 
 async function updatePost(formData: FormData) {
@@ -490,6 +491,7 @@ async function updatePost(formData: FormData) {
   if (!id) adminRedirect("post-update-failed");
 
   const intent = String(formData.get("intent") || "");
+  const publishRequested = intent === "publish";
   const parsed = postSchema.safeParse({
     title: String(formData.get("title") || ""),
     writerName: String(formData.get("writerName") || ""),
@@ -497,7 +499,7 @@ async function updatePost(formData: FormData) {
     content: String(formData.get("content") || ""),
     tags: String(formData.get("tags") || ""),
     imageUrl: String(formData.get("imageUrl") || ""),
-    published: intent === "draft" ? false : true,
+    published: publishRequested,
     publishAt: String(formData.get("publishAt") || ""),
   });
 
@@ -525,7 +527,7 @@ async function updatePost(formData: FormData) {
   revalidatePath("/blog");
   revalidatePath("/admin");
   await writeAuditLog({ action: "post.update", targetType: "post", targetId: id });
-  adminRedirect("post-updated");
+  redirect(`/admin?panel=blog&blogView=${publishRequested ? "published" : "draft"}&status=post-updated`);
 }
 
 async function deletePost(formData: FormData) {
