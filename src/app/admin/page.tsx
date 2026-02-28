@@ -427,24 +427,6 @@ async function saveProjectSortOrder(formData: FormData) {
   adminRedirect("project-reordered");
 }
 
-async function savePostSortOrder(formData: FormData) {
-  "use server";
-  const raw = String(formData.get("postOrder") || "[]");
-  let ids: string[] = [];
-  try {
-    ids = JSON.parse(raw) as string[];
-  } catch {
-    adminRedirect("post-invalid");
-  }
-
-  await Promise.all(ids.map((id, idx) => prisma.post.update({ where: { id }, data: { sortOrder: idx } })));
-  revalidatePath("/");
-  revalidatePath("/blog");
-  revalidatePath("/admin");
-  await writeAuditLog({ action: "post.sort_order", targetType: "post", targetId: String(ids.length), meta: "drag-drop" });
-  adminRedirect("post-updated");
-}
-
 async function createPost(formData: FormData) {
   "use server";
 
@@ -838,6 +820,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const filter = typeof resolvedParams.filter === "string" ? resolvedParams.filter : "all";
   const scope = typeof resolvedParams.scope === "string" ? resolvedParams.scope : "active";
   const panel = typeof resolvedParams.panel === "string" ? resolvedParams.panel : "site";
+  const rawBlogView = typeof resolvedParams.blogView === "string" ? resolvedParams.blogView : "create";
+  const blogView = ["create", "draft", "published", "trash"].includes(rawBlogView) ? rawBlogView : "create";
+  const editId = typeof resolvedParams.editId === "string" ? resolvedParams.editId : "";
 
   if (mustRotatePassword) {
     return (
@@ -895,9 +880,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           ],
         }
       : {}),
-    ...(scope === "trash" ? { deletedAt: { not: null } } : { deletedAt: null }),
-    ...(filter === "published" ? { published: true } : {}),
-    ...(filter === "draft" ? { published: false } : {}),
+    ...(
+      panel === "blog"
+        ? blogView === "trash"
+          ? { deletedAt: { not: null } }
+          : { deletedAt: null }
+        : scope === "trash"
+          ? { deletedAt: { not: null } }
+          : { deletedAt: null }
+    ),
+    ...(panel === "blog"
+      ? blogView === "published"
+        ? { published: true }
+        : blogView === "draft"
+          ? { published: false }
+          : {}
+      : filter === "published"
+        ? { published: true }
+        : filter === "draft"
+          ? { published: false }
+          : {}),
   };
 
   const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets] = await Promise.all([
@@ -909,6 +911,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
     prisma.mediaAsset.findMany({ orderBy: { createdAt: "desc" }, take: 24 }),
   ]);
+
+  const editPost = panel === "blog" && editId
+    ? await prisma.post.findFirst({ where: { id: editId, deletedAt: null } })
+    : null;
 
   const setupTotpSecret = me && !me.totpEnabled ? authenticator.generateSecret() : null;
   const setupTotpUri = setupTotpSecret
@@ -960,13 +966,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
         </aside>
-        {(panel === "projects" || panel === "blog") && (
+        {panel === "projects" && (
           <form className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto_auto]">
             <input type="hidden" name="panel" value={panel} />
             <input
               name="q"
               defaultValue={q}
-              placeholder={panel === "projects" ? "Search projects..." : "Search posts..."}
+              placeholder="Search projects..."
               className="rounded-lg border px-3 py-2"
             />
             <select name="scope" defaultValue={scope} className="rounded-lg border px-3 py-2">
@@ -1191,123 +1197,117 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       {panel === "blog" && (
       <section id="blog-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold">Blog CMS</h2>
+        <h2 className="text-xl font-semibold">Blog CMS</h2>
 
-        <details className="rounded-xl border border-zinc-200 p-4" open>
-          <summary className="cursor-pointer text-sm font-medium">Create blog post</summary>
-          <form id="create-post-form" action={createPost} className="mt-3 grid gap-3 md:grid-cols-2">
-          <SlugHelper titleName="title" slugName="slug" taken={postSlugs} titleInputId="create-post-form-title" />
-          <div className="space-y-2">
-            <input id="create-post-tags" name="tags" placeholder="Tags" className="w-full rounded-lg border px-3 py-2" />
-            <AutoTagsButton titleInputId="create-post-form-title" contentInputId="create-post-content" tagsInputId="create-post-tags" />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <input id="new-post-image-url" type="url" name="imageUrl" placeholder="Cover image URL" className="w-full rounded-lg border px-3 py-2" />
-            <ImageUploader targetInputId="new-post-image-url" />
-            <UrlImagePreview inputId="new-post-image-url" />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <input id="create-post-excerpt" name="excerpt" placeholder="Excerpt" className="w-full rounded-lg border px-3 py-2" required />
-            <AutoExcerptButton titleInputId="create-post-form-title" contentInputId="create-post-content" excerptInputId="create-post-excerpt" />
-          </div>
-          <input type="datetime-local" name="publishAt" className="rounded-lg border px-3 py-2 md:col-span-2" />
-          <LivePreviewTextarea
-            textareaId="create-post-content"
-            formId="create-post-form"
-            name="content"
-            placeholder="Post content (supports # headings, - bullets, 1. numbered lists, ![alt](url) images, emoji)"
-          />
-          <WriterStatus contentInputId="create-post-content" />
-          <PublishChecklist titleId="create-post-form-title" excerptId="create-post-excerpt" tagsId="create-post-tags" contentId="create-post-content" />
-          <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked /> Published</label>
-          <SubmitButton idleText="Add Post" pendingText="Adding..." className="btn-primary w-fit disabled:opacity-60 md:col-span-2" />
-          </form>
-          <div className="mt-2"></div>
-        </details>
-
-        <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
-          {posts.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">✍️ No posts match current filter.</div>}
-          {posts.map((p) => (
-            <details key={p.id} className="rounded-xl border border-zinc-200 p-4" open={p.published}>
-              <summary className="flex cursor-pointer items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{p.title}</span>
-                  <span className={`rounded-full border px-2 py-0.5 text-xs ${badgeTone(p.published)}`}>{p.published ? "Published" : "Draft"}</span>
-                </div>
-                <span className="text-xs text-zinc-500">Updated {new Date(p.updatedAt).toLocaleString()}</span>
-              </summary>
-
-              <form id={`edit-post-form-${p.id}`} action={updatePost} className="mt-4 grid gap-3 md:grid-cols-2">
-                <input type="hidden" name="id" value={p.id} />
-                <SlugHelper titleName="title" slugName="slug" defaultTitle={p.title} defaultSlug={p.slug} taken={postSlugs} titleInputId={`edit-post-title-${p.id}`} />
-                <div className="space-y-2">
-                  <input id={`edit-post-tags-${p.id}`} name="tags" defaultValue={p.tags ?? ""} className="w-full rounded-lg border px-3 py-2" />
-                  <AutoTagsButton titleInputId={`edit-post-title-${p.id}`} contentInputId={`edit-post-content-${p.id}`} tagsInputId={`edit-post-tags-${p.id}`} />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <input id={`post-image-url-${p.id}`} type="url" name="imageUrl" defaultValue={p.imageUrl ?? ""} className="w-full rounded-lg border px-3 py-2" />
-                  <ImageUploader targetInputId={`post-image-url-${p.id}`} />
-                  <UrlImagePreview inputId={`post-image-url-${p.id}`} />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <input id={`edit-post-excerpt-${p.id}`} name="excerpt" defaultValue={p.excerpt} className="w-full rounded-lg border px-3 py-2" required />
-                  <AutoExcerptButton titleInputId={`edit-post-title-${p.id}`} contentInputId={`edit-post-content-${p.id}`} excerptInputId={`edit-post-excerpt-${p.id}`} />
-                </div>
-                <input type="datetime-local" name="publishAt" defaultValue={p.publishAt ? new Date(p.publishAt).toISOString().slice(0, 16) : ""} className="rounded-lg border px-3 py-2 md:col-span-2" />
-                <LivePreviewTextarea
-                  textareaId={`edit-post-content-${p.id}`}
-                  formId={`edit-post-form-${p.id}`}
-                  autosaveKey={`writer-edit-post-content-${p.id}`}
-                  name="content"
-                  defaultValue={p.content}
-                  placeholder="Post content (supports # headings, lists, ![alt](url), emoji)"
-                />
-                <WriterStatus contentInputId={`edit-post-content-${p.id}`} />
-                <PublishChecklist titleId={`edit-post-title-${p.id}`} excerptId={`edit-post-excerpt-${p.id}`} tagsId={`edit-post-tags-${p.id}`} contentId={`edit-post-content-${p.id}`} />
-                <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={p.published} /> Published</label>
-                <div className="flex flex-wrap gap-2 md:col-span-2">
-                  <SubmitButton idleText="Save Changes" pendingText="Saving..." className="btn-primary disabled:opacity-60" />
-                </div>
-              </form>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                <a href={`/blog/${p.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Preview</a>
-                <form action={togglePostPublish}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="published" value={String(p.published)} />
-                  <SubmitButton idleText={p.published ? "Move to Draft" : "Publish"} pendingText="Working..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
-                </form>
-                {scope === "trash" ? (
-                  <>
-                    <form action={restorePost}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <SubmitButton idleText="Restore" pendingText="..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
-                    </form>
-                    <form action={hardDeletePost}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <ConfirmSubmitButton
-                        idleText="Delete Permanently"
-                        pendingText="Deleting..."
-                        confirmMessage="Permanently delete this post? This cannot be undone."
-                        className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
-                      />
-                    </form>
-                  </>
-                ) : (
-                  <form action={deletePost}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <ConfirmSubmitButton
-                      idleText="Move to Trash"
-                      pendingText="Moving..."
-                      confirmMessage="Move this post to trash?"
-                      className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
-                    />
-                  </form>
-                )}
-              </div>
-            </details>
-          ))}
+        <div className="mt-4 flex flex-wrap gap-2 text-sm">
+          <a href="/admin?panel=blog&blogView=create" className={`rounded border px-3 py-1.5 ${blogView === "create" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Create blog post</a>
+          <a href="/admin?panel=blog&blogView=draft" className={`rounded border px-3 py-1.5 ${blogView === "draft" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Draft posts</a>
+          <a href="/admin?panel=blog&blogView=published" className={`rounded border px-3 py-1.5 ${blogView === "published" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Published posts</a>
+          <a href="/admin?panel=blog&blogView=trash" className={`rounded border px-3 py-1.5 ${blogView === "trash" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}>Trash</a>
         </div>
+
+        {(blogView === "draft" || blogView === "published" || blogView === "trash") && (
+          <form className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+            <input type="hidden" name="panel" value="blog" />
+            <input type="hidden" name="blogView" value={blogView} />
+            <input name="q" defaultValue={q} placeholder="Search posts..." className="rounded-lg border px-3 py-2" />
+            <button className="btn-primary">Apply</button>
+            <a href={`/admin?panel=blog&blogView=${blogView}`} className="btn-secondary text-center">Reset</a>
+            {editPost ? <a href={`/admin?panel=blog&blogView=create`} className="btn-secondary text-center">Clear edit mode</a> : <span />}
+          </form>
+        )}
+
+        <div className="mt-5 rounded-xl border border-zinc-200 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-medium text-zinc-700">{editPost ? `Editing: ${editPost.title}` : "Create new post"}</p>
+            {editPost && <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">Edit mode</span>}
+          </div>
+
+          <form id="create-post-form" action={editPost ? updatePost : createPost} className="mt-3 grid gap-3 md:grid-cols-2">
+            {editPost && <input type="hidden" name="id" value={editPost.id} />}
+            <SlugHelper
+              titleName="title"
+              slugName="slug"
+              taken={postSlugs.filter((slug) => slug !== (editPost?.slug ?? ""))}
+              defaultTitle={editPost?.title ?? ""}
+              defaultSlug={editPost?.slug ?? ""}
+              titleInputId="create-post-form-title"
+            />
+            <div className="space-y-2">
+              <input id="create-post-tags" name="tags" defaultValue={editPost?.tags ?? ""} placeholder="Tags" className="w-full rounded-lg border px-3 py-2" />
+              <AutoTagsButton titleInputId="create-post-form-title" contentInputId="create-post-content" tagsInputId="create-post-tags" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <input id="post-image-url" type="url" name="imageUrl" defaultValue={editPost?.imageUrl ?? ""} placeholder="Cover image URL" className="w-full rounded-lg border px-3 py-2" />
+              <ImageUploader targetInputId="post-image-url" />
+              <UrlImagePreview inputId="post-image-url" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <input id="create-post-excerpt" name="excerpt" defaultValue={editPost?.excerpt ?? ""} placeholder="Excerpt" className="w-full rounded-lg border px-3 py-2" required />
+              <AutoExcerptButton titleInputId="create-post-form-title" contentInputId="create-post-content" excerptInputId="create-post-excerpt" />
+            </div>
+            <input type="datetime-local" name="publishAt" defaultValue={editPost?.publishAt ? new Date(editPost.publishAt).toISOString().slice(0, 16) : ""} className="rounded-lg border px-3 py-2 md:col-span-2" />
+            <LivePreviewTextarea
+              textareaId="create-post-content"
+              formId="create-post-form"
+              name="content"
+              defaultValue={editPost?.content ?? ""}
+              placeholder="Post content (supports # headings, - bullets, 1. numbered lists, ![alt](url) images, emoji)"
+            />
+            <WriterStatus contentInputId="create-post-content" />
+            <PublishChecklist titleId="create-post-form-title" excerptId="create-post-excerpt" tagsId="create-post-tags" contentId="create-post-content" />
+            <label className="text-sm md:col-span-2"><input type="checkbox" name="published" defaultChecked={editPost ? editPost.published : true} /> Published</label>
+            <div className="flex gap-2 md:col-span-2">
+              <SubmitButton idleText={editPost ? "Save Changes" : "Add Post"} pendingText={editPost ? "Saving..." : "Adding..."} className="btn-primary w-fit disabled:opacity-60" />
+              {editPost && <a href={`/admin?panel=blog&blogView=${blogView === "create" ? "published" : blogView}`} className="btn-secondary">Back to list</a>}
+            </div>
+          </form>
+        </div>
+
+        {(blogView === "draft" || blogView === "published" || blogView === "trash") && (
+          <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
+            {posts.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">✍️ No posts match current filter.</div>}
+            {posts.map((p) => (
+              <div key={p.id} className="rounded-xl border border-zinc-200 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{p.title}</span>
+                    <span className={`rounded-full border px-2 py-0.5 text-xs ${badgeTone(p.published)}`}>{p.published ? "Published" : "Draft"}</span>
+                  </div>
+                  <span className="text-xs text-zinc-500">Updated {new Date(p.updatedAt).toLocaleString()}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {p.deletedAt ? (
+                    <>
+                      <form action={restorePost}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <SubmitButton idleText="Restore" pendingText="..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
+                      </form>
+                      <form action={hardDeletePost}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <ConfirmSubmitButton idleText="Delete Permanently" pendingText="Deleting..." confirmMessage="Permanently delete this post? This cannot be undone." className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
+                      </form>
+                    </>
+                  ) : (
+                    <>
+                      <a href={`/admin?panel=blog&blogView=${p.published ? "published" : "draft"}&editId=${p.id}`} className="rounded border px-3 py-1.5 text-sm">Edit</a>
+                      <a href={`/blog/${p.slug}?preview=${encodeURIComponent(previewToken)}`} target="_blank" rel="noopener noreferrer" className="rounded border px-3 py-1.5 text-sm">Preview</a>
+                      <form action={togglePostPublish}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="published" value={String(p.published)} />
+                        <SubmitButton idleText={p.published ? "Move to Draft" : "Publish"} pendingText="Working..." className="rounded border px-3 py-1.5 text-sm disabled:opacity-60" />
+                      </form>
+                      <form action={deletePost}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <ConfirmSubmitButton idleText="Move to Trash" pendingText="Moving..." confirmMessage="Move this post to trash?" className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60" />
+                      </form>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
       )}
 
