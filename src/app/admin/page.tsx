@@ -274,6 +274,48 @@ async function saveSettings(formData: FormData) {
   adminRedirect("settings-saved");
 }
 
+async function saveProfileAvatar(formData: FormData) {
+  "use server";
+  const avatarUrl = normalizeUrl(String(formData.get("avatarUrl") || ""));
+
+  await prisma.siteSettings.upsert({
+    where: { id: "main" },
+    update: { avatarUrl },
+    create: {
+      id: "main",
+      fullName: "Nazmul Islam",
+      headline: "AI • Robotics • Agent Systems",
+      bio: "I build intelligent systems, practical software, and automation workflows that ship.",
+      avatarUrl,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "settings.avatar.save", targetType: "site", targetId: "main" });
+  adminRedirect("avatar-saved");
+}
+
+async function clearProfileAvatar() {
+  "use server";
+  await prisma.siteSettings.upsert({
+    where: { id: "main" },
+    update: { avatarUrl: null },
+    create: {
+      id: "main",
+      fullName: "Nazmul Islam",
+      headline: "AI • Robotics • Agent Systems",
+      bio: "I build intelligent systems, practical software, and automation workflows that ship.",
+      avatarUrl: null,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "settings.avatar.clear", targetType: "site", targetId: "main" });
+  adminRedirect("avatar-cleared");
+}
+
 async function createProject(formData: FormData) {
   "use server";
 
@@ -869,7 +911,9 @@ const statusText: Record<string, string> = {
   "media-deleted": "✅ Media deleted",
   "media-delete-failed": "⚠️ Media delete failed",
   "media-profile-updated": "✅ Image moved to profile section",
-  "media-update-failed": "⚠️ Could not update media", 
+  "media-update-failed": "⚠️ Could not update media",
+  "avatar-saved": "✅ Profile avatar saved",
+  "avatar-cleared": "✅ Profile avatar cleared", 
 };
 
 function badgeTone(published: boolean) {
@@ -1117,11 +1161,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input type="url" name="scholarUrl" defaultValue={(settings as unknown as { scholarUrl?: string })?.scholarUrl ?? "https://scholar.google.com/"} placeholder="Google Scholar URL" className="rounded-lg border px-3 py-2" />
               <input type="url" name="researchGateUrl" defaultValue={(settings as unknown as { researchGateUrl?: string })?.researchGateUrl ?? "https://www.researchgate.net/"} placeholder="ResearchGate URL" className="rounded-lg border px-3 py-2 md:col-span-2" />
 
-              <div className="space-y-2 md:col-span-2">
-                <input id="site-avatar-url" type="hidden" name="avatarUrl" defaultValue={settings?.avatarUrl ?? ""} />
-                <ImageUploader targetInputId="site-avatar-url" uploadContext="profile" />
-                <UrlImagePreview inputId="site-avatar-url" />
-              </div>
               <BioField initial={settings?.bio ?? ""} />
               <div className="md:col-span-2">
                 <SubmitButton idleText="Save Settings" pendingText="Saving..." className="btn-primary w-fit disabled:opacity-60" />
@@ -1154,7 +1193,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
         <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3">
           <summary className="cursor-pointer text-sm font-medium">Profile picture Section</summary>
-          <div className="mt-3">
+          <div className="mt-3 space-y-4">
+            <form action={saveProfileAvatar} className="space-y-2 rounded-lg border p-3">
+              <input id="site-avatar-url-profile" type="hidden" name="avatarUrl" defaultValue={settings?.avatarUrl ?? ""} />
+              <ImageUploader targetInputId="site-avatar-url-profile" uploadContext="profile" />
+              <UrlImagePreview inputId="site-avatar-url-profile" />
+              <div className="flex flex-wrap gap-2">
+                <SubmitButton idleText="Save profile image" pendingText="Saving..." className="btn-primary" />
+                <button type="reset" className="btn-secondary">Reset</button>
+              </div>
+            </form>
+
+            <form action={clearProfileAvatar}>
+              <SubmitButton idleText="Delete current profile image" pendingText="Deleting..." className="btn-danger" />
+            </form>
+
             {mediaAssets.length === 0 && legacyMediaAssets.length === 0 ? (
               <div className="rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use Profile uploader to add profile images.</div>
             ) : (
