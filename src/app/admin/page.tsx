@@ -667,6 +667,18 @@ async function deleteMediaAsset(formData: FormData) {
   adminRedirect("media-deleted");
 }
 
+async function markMediaAsProfile(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") || "").trim();
+  if (!id) adminRedirect("media-update-failed");
+
+  await prisma.mediaAsset.update({ where: { id }, data: { kind: "profile" } });
+  revalidatePath("/admin");
+  revalidatePath("/");
+  await writeAuditLog({ action: "media.mark_profile", targetType: "media", targetId: id });
+  adminRedirect("media-profile-updated");
+}
+
 async function createAdminUser(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
@@ -855,7 +867,9 @@ const statusText: Record<string, string> = {
   "sessions-revoked-all": "✅ All admin sessions revoked",
   "slug-conflict": "⚠️ Slug already exists. Choose a unique slug.",
   "media-deleted": "✅ Media deleted",
-  "media-delete-failed": "⚠️ Media delete failed", 
+  "media-delete-failed": "⚠️ Media delete failed",
+  "media-profile-updated": "✅ Image moved to profile section",
+  "media-update-failed": "⚠️ Could not update media", 
 };
 
 function badgeTone(published: boolean) {
@@ -991,7 +1005,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           : {}),
   };
 
-  const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
+  const [settings, projects, posts, adminUsers, auditLogs, me, mediaAssets, legacyMediaAssets, draftCount, publishedCount, trashCount] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.project.findMany({ where: projectWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.post.findMany({ where: postWhere, orderBy: { updatedAt: "desc" }, take: 50 }),
@@ -999,6 +1013,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.adminUser.findUnique({ where: { email: session.user?.email?.toLowerCase() || "" } }),
     prisma.mediaAsset.findMany({ where: { kind: "profile" }, orderBy: { createdAt: "desc" }, take: 24 }),
+    prisma.mediaAsset.findMany({ where: { kind: "blog" }, orderBy: { createdAt: "desc" }, take: 24 }),
     prisma.post.count({ where: { deletedAt: null, published: false } }),
     prisma.post.count({ where: { deletedAt: null, published: true } }),
     prisma.post.count({ where: { deletedAt: { not: null, gte: trashRetainFrom } } }),
@@ -1140,20 +1155,51 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <details className="mt-6 md:col-span-2 rounded-lg border border-zinc-200 p-3">
           <summary className="cursor-pointer text-sm font-medium">Profile picture Section</summary>
           <div className="mt-3">
-            {mediaAssets.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use any upload button to add images.</div>
+            {mediaAssets.length === 0 && legacyMediaAssets.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-3 text-xs text-zinc-500">🖼️ No uploads yet. Use Profile uploader to add profile images.</div>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-3">
-                {mediaAssets.map((asset) => (
-                  <div key={asset.id} className="rounded-lg border p-2">
-                    <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
-                    <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
-                    <form action={deleteMediaAsset} className="mt-2">
-                      <input type="hidden" name="id" value={asset.id} />
-                      <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
-                    </form>
+              <div className="space-y-4">
+                {mediaAssets.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-zinc-600">Profile images (used on home round scroll)</p>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {mediaAssets.map((asset) => (
+                        <div key={asset.id} className="rounded-lg border p-2">
+                          <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
+                          <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
+                          <form action={deleteMediaAsset} className="mt-2">
+                            <input type="hidden" name="id" value={asset.id} />
+                            <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
+                          </form>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {legacyMediaAssets.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-zinc-600">Blog images (you can move any to profile)</p>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {legacyMediaAssets.map((asset) => (
+                        <div key={asset.id} className="rounded-lg border p-2">
+                          <Image src={asset.url} alt={asset.id} width={280} height={120} unoptimized className="h-24 w-full rounded object-cover" />
+                          <p className="mt-2 truncate text-[11px] text-zinc-600">{new Date(asset.createdAt).toLocaleString()}</p>
+                          <div className="mt-2 flex gap-2">
+                            <form action={markMediaAsProfile}>
+                              <input type="hidden" name="id" value={asset.id} />
+                              <SubmitButton idleText="Use in Profile" pendingText="Moving..." className="rounded border px-2 py-1 text-xs" />
+                            </form>
+                            <form action={deleteMediaAsset}>
+                              <input type="hidden" name="id" value={asset.id} />
+                              <SubmitButton idleText="Delete" pendingText="Deleting..." className="btn-danger" />
+                            </form>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-3">
