@@ -1226,18 +1226,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <div className="mt-2"><FormDraftAssist formId="create-post-form" storageKey="admin-create-post-draft" /></div>
         </details>
 
-        <div className="mt-6 rounded-xl border border-zinc-200 p-3">
-          <p className="mb-2 text-sm font-medium text-zinc-700">Drag to reorder blog list order</p>
-          <form action={savePostSortOrder} className="space-y-3">
-            <ReorderList inputName="postOrder" items={posts.map((p) => ({ id: p.id, label: p.title }))} />
-            <SubmitButton idleText="Save Post Order" pendingText="Saving..." className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white" />
-          </form>
-        </div>
-
         <div className="mt-6 max-h-[520px] space-y-3 overflow-y-auto pr-1">
           {posts.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">✍️ No posts match current filter.</div>}
           {posts.map((p) => (
-            <details key={p.id} className="rounded-xl border border-zinc-200 p-4" open={false}>
+            <details key={p.id} className="rounded-xl border border-zinc-200 p-4" open={p.published}>
               <summary className="flex cursor-pointer items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{p.title}</span>

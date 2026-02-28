@@ -8,7 +8,7 @@ function isOrderedItem(line: string) {
 }
 
 function parseImage(line: string) {
-  const m = line.match(/^!\[(.*?)\]\((https?:\/\/[^\s)]+|data:image\/[^)]+)\)$/i);
+  const m = line.trim().match(/^!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^\s)]+)\)$/i);
   if (!m) return null;
   return { alt: m[1] || "inline image", src: m[2] };
 }
