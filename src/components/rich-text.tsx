@@ -8,19 +8,32 @@ function isOrderedItem(line: string) {
 }
 
 function parseSingleImageLine(line: string) {
-  const m = line.trim().match(/^!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^\s)]+)\)$/i);
-  if (!m) return null;
-  return { alt: m[1] || "inline image", src: m[2] };
+  const trimmed = line.trim();
+  const md = trimmed.match(/^!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^\s)]+)\)$/i);
+  if (md) return { alt: md[1] || "inline image", src: md[2] };
+
+  const html = trimmed.match(/^<img[^>]*src=["']([^"']+)["'][^>]*>$/i);
+  if (html) {
+    const alt = trimmed.match(/alt=["']([^"']*)["']/i)?.[1] || "inline image";
+    return { alt, src: html[1] };
+  }
+
+  if (/^(https?:\/\/|\/).+\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(trimmed)) {
+    return { alt: "inline image", src: trimmed };
+  }
+
+  return null;
 }
 
 function renderInlineMarkdown(line: string, keyPrefix: string) {
-  const regex = /!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^)\s]+)\)/gi;
+  const mdRegex = /!\[(.*?)\]\(((?:https?:\/\/|\/|data:image\/)[^)\s]+)\)/gi;
+  const htmlRegex = /<img[^>]*src=["']([^"']+)["'][^>]*>/gi;
   const parts: React.ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
   let idx = 0;
 
-  while ((m = regex.exec(line))) {
+  while ((m = mdRegex.exec(line))) {
     if (m.index > last) {
       parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{line.slice(last, m.index)}</span>);
     }
@@ -34,11 +47,27 @@ function renderInlineMarkdown(line: string, keyPrefix: string) {
         />
       </figure>,
     );
-    last = regex.lastIndex;
+    last = mdRegex.lastIndex;
   }
 
-  if (last < line.length) {
-    parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{line.slice(last)}</span>);
+  const remainder = line.slice(last);
+  if (remainder) {
+    let hLast = 0;
+    let hm: RegExpExecArray | null;
+    while ((hm = htmlRegex.exec(remainder))) {
+      if (hm.index > hLast) {
+        parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{remainder.slice(hLast, hm.index)}</span>);
+      }
+      parts.push(
+        <figure key={`${keyPrefix}-i-${idx++}`} className="my-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm">
+          <img src={hm[1]} alt="inline image" className="w-full object-cover" loading="lazy" />
+        </figure>,
+      );
+      hLast = htmlRegex.lastIndex;
+    }
+    if (hLast < remainder.length) {
+      parts.push(<span key={`${keyPrefix}-t-${idx++}`}>{remainder.slice(hLast)}</span>);
+    }
   }
 
   return parts.length ? parts : line;

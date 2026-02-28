@@ -4,6 +4,14 @@ import RichText from "@/components/rich-text";
 
 export const dynamic = "force-dynamic";
 
+function firstImageFromContent(content: string) {
+  const md = content.match(/!\[[^\]]*\]\(([^)\s]+)\)/i);
+  if (md?.[1]) return md[1];
+  const html = content.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+  if (html?.[1]) return html[1];
+  return null;
+}
+
 export default async function BlogPostPage({
   params,
   searchParams,
@@ -20,6 +28,8 @@ export default async function BlogPostPage({
   const validPreview = preview && preview === (process.env.DRAFT_PREVIEW_TOKEN || "preview-dev-token");
   if (!post || (!validPreview && (!post.published || post.deletedAt || (post.publishAt && post.publishAt > now)))) notFound();
 
+  const coverSrc = post.imageUrl || firstImageFromContent(post.content);
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       {validPreview && (
@@ -29,9 +39,9 @@ export default async function BlogPostPage({
       )}
       <h1 className="text-4xl font-bold text-white">{post.title}</h1>
       <p className="mt-2 text-zinc-400">{new Date(post.createdAt).toLocaleDateString()}</p>
-      {post.imageUrl && (
+      {coverSrc && (
         <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-lg">
-          <img src={post.imageUrl} alt={post.title} className="h-72 w-full object-cover md:h-96" />
+          <img src={coverSrc} alt={post.title} className="h-72 w-full object-cover md:h-96" />
         </div>
       )}
       <article className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-sm">
