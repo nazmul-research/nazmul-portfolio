@@ -7,7 +7,7 @@ export default function PublicationExcerptTool({ abstractId, excerptId }: { abst
     if (!abstractEl || !excerptEl) return;
 
     const words = abstractEl.value.trim().split(/\s+/).filter(Boolean);
-    const out = words.slice(0, 300).join(" ");
+    const out = words.slice(0, 100).join(" ");
     excerptEl.value = out;
     excerptEl.dispatchEvent(new Event("input", { bubbles: true }));
     excerptEl.dispatchEvent(new Event("change", { bubbles: true }));
@@ -15,7 +15,7 @@ export default function PublicationExcerptTool({ abstractId, excerptId }: { abst
 
   return (
     <button type="button" onClick={generate} className="rounded border px-3 py-1.5 text-sm">
-      Auto-generate Excerpt (first 300 words)
+      Auto-generate Excerpt (first 100 words)
     </button>
   );
 }

@@ -182,7 +182,7 @@ function slugify(value: string) {
 
 
 function makeExcerptFromAbstract(abstract: string) {
-  return abstract.trim().split(/\s+/).filter(Boolean).slice(0, 300).join(" ");
+  return abstract.trim().split(/\s+/).filter(Boolean).slice(0, 100).join(" ");
 }
 
 function extractFirstImageFromContent(content: string) {
