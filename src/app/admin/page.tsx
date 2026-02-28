@@ -1451,7 +1451,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
             <div className="space-y-2 md:col-span-2">
               <input id="create-post-excerpt" name="excerpt" defaultValue={editPost?.excerpt ?? ""} placeholder="Excerpt" className="w-full rounded-lg border px-3 py-2" required />
-              <AutoExcerptButton titleInputId="create-post-form-title" contentInputId="create-post-content" excerptInputId="create-post-excerpt" />
             </div>
             <input type="datetime-local" name="publishAt" defaultValue={editPost?.publishAt ? new Date(editPost.publishAt).toISOString().slice(0, 16) : ""} className="rounded-lg border px-3 py-2 md:col-span-2" />
             <LivePreviewTextarea
@@ -1463,6 +1462,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             />
             <WriterStatus contentInputId="create-post-content" />
             <PublishChecklist titleId="create-post-form-title" excerptId="create-post-excerpt" tagsId="create-post-tags" contentId="create-post-content" />
+            <div className="md:col-span-2">
+              <AutoExcerptButton titleInputId="create-post-form-title" contentInputId="create-post-content" excerptInputId="create-post-excerpt" />
+            </div>
             <div className="flex flex-wrap gap-2 md:col-span-2">
               <button type="submit" formAction={editPost ? updatePostPublish : createPostPublish} className="btn-primary">Publish post</button>
               <button type="submit" formAction={editPost ? updatePostDraft : createPostDraft} className="btn-secondary">Save as draft</button>
