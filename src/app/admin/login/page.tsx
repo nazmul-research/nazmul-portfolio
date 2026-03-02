@@ -44,6 +44,7 @@ export default function AdminLoginPage() {
       if (!res.ok) setForgotMsg(data.error || "Failed to process request");
       else {
         setForgotMsg("If this email exists, reset link is generated.");
+        if (data.emailed) setForgotMsg("Reset email sent. Check your inbox.");
         if (data.resetUrl) setForgotLink(String(data.resetUrl));
       }
     } catch {
