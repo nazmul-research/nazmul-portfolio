@@ -86,6 +86,13 @@ const postSchema = z.object({
   publishAt: z.string().optional().or(z.literal("")),
 });
 
+const aboutSchema = z.object({
+  aboutBlock1: z.string().trim().optional().or(z.literal("")),
+  aboutBlock2: z.string().trim().optional().or(z.literal("")),
+  aboutBlock3: z.string().trim().optional().or(z.literal("")),
+  cvUrl: z.string().trim().optional().or(z.literal("")),
+});
+
 const publicationSchema = z.object({
   title: z.string().trim().min(3),
   authors: z.string().trim().min(3),
@@ -401,6 +408,44 @@ async function changeMyPassword(formData: FormData) {
 
   await writeAuditLog({ action: "auth.password_change", targetType: "admin_user", targetId: me.id });
   adminRedirect("password-changed");
+}
+
+async function saveAboutSettings(formData: FormData) {
+  "use server";
+
+  const parsed = aboutSchema.safeParse({
+    aboutBlock1: String(formData.get("aboutBlock1") || ""),
+    aboutBlock2: String(formData.get("aboutBlock2") || ""),
+    aboutBlock3: String(formData.get("aboutBlock3") || ""),
+    cvUrl: String(formData.get("cvUrl") || ""),
+  });
+
+  if (!parsed.success) redirect("/admin?panel=about&status=settings-invalid");
+
+  await prisma.siteSettings.upsert({
+    where: { id: "main" },
+    update: {
+      aboutBlock1: cleanOptional(parsed.data.aboutBlock1),
+      aboutBlock2: cleanOptional(parsed.data.aboutBlock2),
+      aboutBlock3: cleanOptional(parsed.data.aboutBlock3),
+      cvUrl: normalizeUrl(parsed.data.cvUrl),
+    },
+    create: {
+      id: "main",
+      fullName: "Nazmul Islam",
+      headline: "AI • Robotics • Agent Systems",
+      bio: "I build intelligent systems, practical software, and automation workflows that ship.",
+      aboutBlock1: cleanOptional(parsed.data.aboutBlock1),
+      aboutBlock2: cleanOptional(parsed.data.aboutBlock2),
+      aboutBlock3: cleanOptional(parsed.data.aboutBlock3),
+      cvUrl: normalizeUrl(parsed.data.cvUrl),
+    },
+  });
+
+  revalidatePath("/about");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "about.update", targetType: "site", targetId: "main" });
+  redirect("/admin?panel=about&status=settings-saved&aboutSaved=1");
 }
 
 async function createProject(formData: FormData) {
@@ -1056,6 +1101,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const filter = typeof resolvedParams.filter === "string" ? resolvedParams.filter : "all";
   const scope = typeof resolvedParams.scope === "string" ? resolvedParams.scope : "active";
   const panel = typeof resolvedParams.panel === "string" ? resolvedParams.panel : "site";
+  const aboutSaved = typeof resolvedParams.aboutSaved === "string" ? resolvedParams.aboutSaved : "";
   const editProjectId = typeof resolvedParams.editProjectId === "string" ? resolvedParams.editProjectId : "";
   const editPublicationId = typeof resolvedParams.editPublicationId === "string" ? resolvedParams.editPublicationId : "";
   const rawBlogView = typeof resolvedParams.blogView === "string" ? resolvedParams.blogView : "create";
@@ -1354,13 +1400,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <h2 className="text-xl font-semibold">About CMS</h2>
         <p className="mt-1 text-sm text-zinc-500">Manage your About page content and CV file.</p>
 
-        <form action={saveSettings} className="mt-4 grid gap-3">
-          <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="Summary" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="Career Experience" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="Academic Background" className="min-h-28 rounded-lg border px-3 py-2" />
+        <form action={saveAboutSettings} className="mt-4 grid gap-3">
+          <textarea name="aboutBlock1" defaultValue={aboutSaved ? "" : ((settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? "")} placeholder="Summary" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock2" defaultValue={aboutSaved ? "" : ((settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? "")} placeholder="Career Experience" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock3" defaultValue={aboutSaved ? "" : ((settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? "")} placeholder="Academic Background" className="min-h-28 rounded-lg border px-3 py-2" />
 
           <div className="rounded-lg border p-3">
-            <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={(settings as unknown as { cvUrl?: string })?.cvUrl ?? ""} />
+            <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={aboutSaved ? "" : ((settings as unknown as { cvUrl?: string })?.cvUrl ?? "")} />
             <CvUploader targetInputId="about-cv-url" />
             {(settings as unknown as { cvUrl?: string })?.cvUrl && (
               <a href={(settings as unknown as { cvUrl?: string }).cvUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">Open current CV</a>
