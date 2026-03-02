@@ -1357,7 +1357,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <form action={saveSettings} className="mt-4 grid gap-3">
           <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="Summary" className="min-h-28 rounded-lg border px-3 py-2" />
           <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="Career Experience" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="Education Experience" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="Academic Background" className="min-h-28 rounded-lg border px-3 py-2" />
 
           <div className="rounded-lg border p-3">
             <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={(settings as unknown as { cvUrl?: string })?.cvUrl ?? ""} />
