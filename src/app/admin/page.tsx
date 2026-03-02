@@ -1115,7 +1115,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (mustRotatePassword) {
     return (
       <main className="mx-auto max-w-4xl space-y-6 px-6 py-10 text-zinc-900" id="main-content">
-        <header className="flex flex-wrap items-center justify-between gap-3">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold text-white">Security Required</h1>
           <form action="/api/auth/signout" method="post">
             <button className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm">Sign out</button>
@@ -1232,8 +1232,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
 
   return (
-    <main className="mx-auto max-w-6xl space-y-8 px-6 py-10 text-zinc-900" id="main-content">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 text-zinc-900 md:space-y-8 md:px-6 md:py-10" id="main-content">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Portfolio CMS Admin</h1>
           <p className="text-sm text-zinc-300">Control content, publish workflow, and homepage visibility from one place.</p>
@@ -1247,16 +1247,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="rounded-xl border border-emerald-300/40 bg-emerald-100 px-4 py-3 text-sm text-emerald-900 shadow-sm">{statusText[status]}</div>
       )}
 
-      <section className="rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-sm backdrop-blur transition-all duration-300">
-        <div className="mb-3 flex flex-wrap gap-2 text-xs">
-          <a href="/admin?panel=site" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "site" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="site" />Site</a>
-          <a href="/admin?panel=projects" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "projects" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="projects" />Projects</a>
-          <a href="/admin?panel=about" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "about" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="about" />About</a>
-          <a href="/admin?panel=blog" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "blog" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="blog" />Blog</a>
-          <a href="/admin?panel=research" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "research" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="research" />Research</a>
-          <a href="/admin?panel=users" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "users" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="users" />Users</a>
-          <a href="/admin?panel=security" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "security" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="security" />Security</a>
-          <a href="/admin?panel=audit" className={`admin-nav-link rounded border px-2 py-1 transition ${panel === "audit" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="audit" />Audit</a>
+      <section className="rounded-2xl border border-zinc-200 bg-white/95 p-3 shadow-sm backdrop-blur transition-all duration-300 md:p-4">
+        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 text-xs whitespace-nowrap">
+          <a href="/admin?panel=site" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "site" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="site" />Site</a>
+          <a href="/admin?panel=projects" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "projects" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="projects" />Projects</a>
+          <a href="/admin?panel=about" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "about" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="about" />About</a>
+          <a href="/admin?panel=blog" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "blog" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="blog" />Blog</a>
+          <a href="/admin?panel=research" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "research" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="research" />Research</a>
+          <a href="/admin?panel=users" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "users" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="users" />Users</a>
+          <a href="/admin?panel=security" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "security" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="security" />Security</a>
+          <a href="/admin?panel=audit" className={`admin-nav-link shrink-0 rounded border px-3 py-1.5 transition ${panel === "audit" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100"}`}><NavIcon kind="audit" />Audit</a>
         </div>
         <aside className="pointer-events-none fixed right-5 top-24 z-20 hidden xl:block">
           <div className="pointer-events-auto rounded-xl border border-zinc-200 bg-white/95 p-2 shadow">
@@ -1591,7 +1591,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             {posts.length === 0 && <div className="rounded-lg border border-dashed p-3 text-sm text-zinc-500">0 posts</div>}
             {posts.map((p) => (
               <div key={p.id} className="rounded-xl border border-zinc-200 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-semibold">{p.title}</p>
                     <p className="text-xs text-zinc-500">Writer: {p.writerName || "Not set"} • Category: {p.category || "technical"}</p>

@@ -195,6 +195,15 @@ h1,h2,h3,.display-font {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    min-height: 40px;
+  }
 }
 
 .excerpt-fade {
