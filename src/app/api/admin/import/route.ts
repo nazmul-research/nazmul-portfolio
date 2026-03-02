@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function asObject(input: unknown): Record<string, unknown> {
+  return input && typeof input === "object" && !Array.isArray(input)
+    ? (input as Record<string, unknown>)
+    : {};
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   const role = (session?.user as Record<string, unknown> | undefined)?.role;
@@ -10,11 +16,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     dryRun?: boolean;
     payload?: {
       data?: {
-        siteSettings?: Record<string, unknown> | null;
+        siteSettings?: unknown;
         projects?: Array<Record<string, unknown>>;
         posts?: Array<Record<string, unknown>>;
         publications?: Array<Record<string, unknown>>;
@@ -22,7 +28,9 @@ export async function POST(req: Request) {
     };
   } | null;
 
-  if (!body?.payload?.data) return NextResponse.json({ error: "Invalid backup payload" }, { status: 400 });
+  if (!body?.payload?.data) {
+    return NextResponse.json({ error: "Invalid backup payload" }, { status: 400 });
+  }
 
   const data = body.payload.data;
   const summary = {
@@ -37,12 +45,17 @@ export async function POST(req: Request) {
   }
 
   await prisma.$transaction(async (tx) => {
-    if (data.siteSettings && typeof data.siteSettings === "object") {
-      const siteSettings = data.siteSettings as Record<string, unknown>;
+    const siteSettings = asObject(data.siteSettings);
+    if (Object.keys(siteSettings).length) {
+      const createPayload: Record<string, unknown> = { id: "main" };
+      for (const [k, v] of Object.entries(siteSettings)) {
+        if (k !== "id") createPayload[k] = v;
+      }
+
       await tx.siteSettings.upsert({
         where: { id: "main" },
         update: siteSettings as never,
-        create: { id: "main", ...siteSettings } as never,
+        create: createPayload as never,
       });
     }
 
