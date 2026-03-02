@@ -368,6 +368,41 @@ async function clearProfileAvatar() {
   adminRedirect("avatar-cleared");
 }
 
+
+async function changeMyPassword(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) adminRedirect("auth-required");
+
+  const currentPassword = String(formData.get("currentPassword") || "");
+  const newPassword = String(formData.get("newPassword") || "");
+  const confirmPassword = String(formData.get("confirmPassword") || "");
+
+  if (!currentPassword || newPassword.length < 8 || newPassword !== confirmPassword) {
+    adminRedirect("password-invalid");
+  }
+
+  const me = await prisma.adminUser.findUnique({ where: { email } });
+  if (!me) adminRedirect("admin-not-found");
+
+  const ok = await verifyPassword(currentPassword, me.password);
+  if (!ok) adminRedirect("password-current-invalid");
+
+  const nextHash = await hashPassword(newPassword);
+  await prisma.adminUser.update({
+    where: { id: me.id },
+    data: {
+      password: nextHash,
+      passwordUpdatedAt: new Date(),
+      sessionVersion: { increment: 1 },
+    },
+  });
+
+  await writeAuditLog({ action: "auth.password_change", targetType: "admin_user", targetId: me.id });
+  adminRedirect("password-changed");
+}
+
 async function createProject(formData: FormData) {
   "use server";
 
