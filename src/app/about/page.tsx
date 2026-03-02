@@ -17,17 +17,17 @@ export default async function AboutPage() {
       <div className="mt-8 grid gap-4">
         <section className="glass-card rounded-3xl p-6">
           <h2 className="mb-2 text-xl font-semibold text-white">Summary</h2>
-          <p className="leading-8 text-zinc-200">{summary}</p>
+          <div className="whitespace-pre-wrap leading-8 text-zinc-200">{summary}</div>
         </section>
 
         <section className="glass-card rounded-3xl p-6">
           <h2 className="mb-2 text-xl font-semibold text-white">Career Experience</h2>
-          <p className="leading-8 text-zinc-200">{careerExperience}</p>
+          <div className="whitespace-pre-wrap leading-8 text-zinc-200">{careerExperience}</div>
         </section>
 
         <section className="glass-card rounded-3xl p-6">
           <h2 className="mb-2 text-xl font-semibold text-white">Education Experience</h2>
-          <p className="leading-8 text-zinc-200">{educationExperience}</p>
+          <div className="whitespace-pre-wrap leading-8 text-zinc-200">{educationExperience}</div>
         </section>
       </div>
 
