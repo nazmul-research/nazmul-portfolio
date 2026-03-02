@@ -835,6 +835,133 @@ async function deletePublication(formData: FormData) {
   redirect("/admin?panel=research&status=publication-deleted");
 }
 
+
+async function createAdminUser(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as Record<string, unknown> | undefined)?.role;
+  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+
+  const name = String(formData.get("name") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+  const nextRoleRaw = String(formData.get("role") || "editor").trim().toLowerCase();
+  const nextRole = nextRoleRaw === "owner" ? "owner" : "editor";
+
+  if (!name || !email || password.length < 8) adminRedirect("admin-user-invalid");
+
+  const existing = await prisma.adminUser.findUnique({ where: { email } });
+  if (existing) adminRedirect("admin-user-invalid");
+
+  const hashed = await hashPassword(password);
+  await prisma.adminUser.create({
+    data: {
+      name,
+      email,
+      password: hashed,
+      role: nextRole,
+      active: true,
+    },
+  });
+
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "admin_user.create", targetType: "admin_user", targetId: email });
+  adminRedirect("admin-user-saved");
+}
+
+async function toggleAdminUserActive(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as Record<string, unknown> | undefined)?.role;
+  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+
+  const id = String(formData.get("id") || "").trim();
+  const active = String(formData.get("active") || "true") === "true";
+  if (!id) adminRedirect("admin-user-invalid");
+
+  await prisma.adminUser.update({ where: { id }, data: { active: !active, sessionVersion: { increment: 1 } } });
+  revalidatePath("/admin");
+  await writeAuditLog({ action: active ? "admin_user.deactivate" : "admin_user.activate", targetType: "admin_user", targetId: id });
+  adminRedirect(active ? "admin-user-deactivated" : "admin-user-activated");
+}
+
+async function enableMyTotp(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) adminRedirect("auth-required");
+
+  const token = String(formData.get("token") || "").trim();
+  const totpSecret = String(formData.get("totpSecret") || "").trim();
+  if (!token || !totpSecret) adminRedirect("totp-invalid");
+
+  const ok = authenticator.verify({ token, secret: totpSecret });
+  if (!ok) adminRedirect("totp-invalid");
+
+  const recoveryCodes = generateRecoveryCodes();
+  await prisma.adminUser.update({
+    where: { email },
+    data: {
+      totpEnabled: true,
+      totpSecret,
+      recoveryCodesHash: hashRecoveryCodes(recoveryCodes),
+    },
+  });
+
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "totp.enable", targetType: "admin_user", targetId: email });
+  adminRedirect("totp-enabled");
+}
+
+async function disableMyTotp() {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) adminRedirect("auth-required");
+
+  await prisma.adminUser.update({ where: { email }, data: { totpEnabled: false, totpSecret: null, recoveryCodesHash: null } });
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "totp.disable", targetType: "admin_user", targetId: email });
+  adminRedirect("totp-disabled");
+}
+
+async function regenerateRecoveryCodes() {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) adminRedirect("auth-required");
+
+  const recoveryCodes = generateRecoveryCodes();
+  await prisma.adminUser.update({ where: { email }, data: { recoveryCodesHash: hashRecoveryCodes(recoveryCodes) } });
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "totp.recovery.regenerate", targetType: "admin_user", targetId: email });
+  adminRedirect("recovery-codes-regenerated");
+}
+
+async function forceLogoutMySessions() {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) adminRedirect("auth-required");
+
+  await prisma.adminUser.update({ where: { email }, data: { sessionVersion: { increment: 1 } } });
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "sessions.revoke.self", targetType: "admin_user", targetId: email });
+  adminRedirect("sessions-revoked");
+}
+
+async function forceLogoutAllAdminSessions() {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as Record<string, unknown> | undefined)?.role;
+  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+
+  await prisma.adminUser.updateMany({ data: { sessionVersion: { increment: 1 } } });
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "sessions.revoke.all", targetType: "admin_user", targetId: "all" });
+  adminRedirect("sessions-revoked-all");
+}
+
 const statusText: Record<string, string> = {
   "settings-saved": "✅ Settings saved",
   "settings-invalid": "⚠️ Settings invalid. Check required fields and URL/email format.",
