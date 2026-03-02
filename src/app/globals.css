@@ -303,3 +303,33 @@ html[data-theme="dark"] .admin-panel .btn-secondary {
 html[data-theme="dark"] .admin-panel .btn-secondary:hover {
   background: rgba(255,255,255,.12);
 }
+
+
+/* Website light-mode color tuning */
+html[data-theme="light"] .glow-btn {
+  background: linear-gradient(90deg, #4f46e5, #0284c7) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .title-underline::after {
+  background: linear-gradient(90deg, #4f46e5, #0284c7);
+}
+
+html[data-theme="light"] .glass-card .text-zinc-300,
+html[data-theme="light"] .glass-card .text-zinc-200 {
+  color: #374151 !important;
+}
+
+html[data-theme="light"] .glass-card .text-zinc-400,
+html[data-theme="light"] .glass-card .text-zinc-500 {
+  color: #6b7280 !important;
+}
+
+html[data-theme="light"] .excerpt-fade::after {
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(248,250,252,0.95));
+}
+
+html[data-theme="light"] footer {
+  color: #4b5563;
+  border-color: rgba(15,23,42,.12);
+}
