@@ -6,6 +6,8 @@ export default function ImportBackup() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirm1, setConfirm1] = useState(false);
+  const [confirm2, setConfirm2] = useState(false);
 
   async function runImport(apply: boolean) {
     const file = fileRef.current?.files?.[0];
@@ -42,7 +44,22 @@ export default function ImportBackup() {
       <input ref={fileRef} type="file" accept="application/json" className="hidden" />
       <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={busy}>Choose backup</button>
       <button type="button" className="btn-secondary" onClick={() => void runImport(false)} disabled={busy}>Dry run</button>
-      <button type="button" className="btn-primary" onClick={() => void runImport(true)} disabled={busy}>Import Backup</button>
+      <label className="text-xs text-zinc-600"><input type="checkbox" checked={confirm1} onChange={(e) => setConfirm1(e.target.checked)} className="mr-1" />I already exported a backup first</label>
+      <label className="text-xs text-zinc-600"><input type="checkbox" checked={confirm2} onChange={(e) => setConfirm2(e.target.checked)} className="mr-1" />I understand import may overwrite existing data</label>
+      <button
+        type="button"
+        className="btn-primary"
+        onClick={() => {
+          if (!confirm1 || !confirm2) {
+            setMsg("⚠️ Please export backup first and confirm overwrite risk before importing.");
+            return;
+          }
+          void runImport(true);
+        }}
+        disabled={busy}
+      >
+        Import Backup
+      </button>
       {msg && <span className="text-xs text-zinc-600">{msg}</span>}
     </div>
   );
