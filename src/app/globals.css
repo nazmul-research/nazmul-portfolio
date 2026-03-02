@@ -402,3 +402,12 @@ html[data-theme="dark"] .admin-panel .border-emerald-300,
 html[data-theme="dark"] .admin-panel .border-red-300 {
   border-color: rgba(148, 163, 184, 0.35) !important;
 }
+
+
+/* Light-mode active admin tab tone */
+html[data-theme="light"] .admin-nav-link.bg-zinc-900,
+html[data-theme="light"] .admin-nav-link.text-white {
+  background: rgba(59,130,246,0.18) !important;
+  color: #1e3a8a !important;
+  border-color: rgba(59,130,246,0.45) !important;
+}
