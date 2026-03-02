@@ -40,12 +40,11 @@ export default function ImportBackup() {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="rounded-lg border border-zinc-300/40 p-2">
+      <div className="flex flex-wrap items-center gap-2">
       <input ref={fileRef} type="file" accept="application/json" className="hidden" />
       <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={busy}>Choose backup</button>
       <button type="button" className="btn-secondary" onClick={() => void runImport(false)} disabled={busy}>Dry run</button>
-      <label className="text-xs text-zinc-600"><input type="checkbox" checked={confirm1} onChange={(e) => setConfirm1(e.target.checked)} className="mr-1" />I already exported a backup first</label>
-      <label className="text-xs text-zinc-600"><input type="checkbox" checked={confirm2} onChange={(e) => setConfirm2(e.target.checked)} className="mr-1" />I understand import may overwrite existing data</label>
       <button
         type="button"
         className="btn-primary"
@@ -61,6 +60,11 @@ export default function ImportBackup() {
         Import Backup
       </button>
       {msg && <span className="text-xs text-zinc-600">{msg}</span>}
+      </div>
+      <div className="mt-2 flex flex-col gap-1 text-xs text-zinc-500">
+        <label><input type="checkbox" checked={confirm1} onChange={(e) => setConfirm1(e.target.checked)} className="mr-1" />I already exported a backup first</label>
+        <label><input type="checkbox" checked={confirm2} onChange={(e) => setConfirm2(e.target.checked)} className="mr-1" />I understand import may overwrite existing data</label>
+      </div>
     </div>
   );
 }
