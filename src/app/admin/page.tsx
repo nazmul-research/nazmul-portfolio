@@ -904,7 +904,7 @@ async function enableMyTotp(formData: FormData) {
     data: {
       totpEnabled: true,
       totpSecret,
-      recoveryCodesHash: hashRecoveryCodes(recoveryCodes),
+      recoveryCodesHash: await hashRecoveryCodes(recoveryCodes),
     },
   });
 
@@ -932,7 +932,7 @@ async function regenerateRecoveryCodes() {
   if (!email) adminRedirect("auth-required");
 
   const recoveryCodes = generateRecoveryCodes();
-  await prisma.adminUser.update({ where: { email }, data: { recoveryCodesHash: hashRecoveryCodes(recoveryCodes) } });
+  await prisma.adminUser.update({ where: { email }, data: { recoveryCodesHash: await hashRecoveryCodes(recoveryCodes) } });
   revalidatePath("/admin");
   await writeAuditLog({ action: "totp.recovery.regenerate", targetType: "admin_user", targetId: email });
   adminRedirect("recovery-codes-regenerated");
