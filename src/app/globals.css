@@ -275,33 +275,47 @@ html[data-theme="light"] .admin-panel .text-zinc-500 { color: #6b7280 !important
 html[data-theme="light"] .admin-panel input,
 html[data-theme="light"] .admin-panel textarea,
 html[data-theme="light"] .admin-panel select {
-  background: #ffffff;
+  background: #f8fafc;
   color: #111827;
   border-color: #d1d5db;
 }
 
 html[data-theme="light"] .admin-panel .btn-secondary {
-  background: #ffffff;
+  background: #f8fafc;
   border-color: #d1d5db;
   color: #111827;
+}
+
+html[data-theme="dark"] .admin-panel,
+html[data-theme="dark"] .admin-panel details,
+html[data-theme="dark"] .admin-panel section {
+  background: #0f172a !important;
+  border-color: rgba(255,255,255,.14) !important;
+  color: #e5e7eb !important;
 }
 
 html[data-theme="dark"] .admin-panel input,
 html[data-theme="dark"] .admin-panel textarea,
 html[data-theme="dark"] .admin-panel select {
-  background: rgba(255,255,255,.04);
-  color: #f3f4f6;
-  border-color: rgba(255,255,255,.18);
+  background: #111827;
+  color: #f9fafb;
+  border-color: rgba(255,255,255,.2);
 }
 
 html[data-theme="dark"] .admin-panel .btn-secondary {
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.2);
+  background: #1f2937;
+  border-color: rgba(255,255,255,.22);
   color: #f3f4f6;
 }
 
 html[data-theme="dark"] .admin-panel .btn-secondary:hover {
-  background: rgba(255,255,255,.12);
+  background: #374151;
+}
+
+html[data-theme="dark"] .admin-panel .text-zinc-500,
+html[data-theme="dark"] .admin-panel .text-zinc-600,
+html[data-theme="dark"] .admin-panel .text-zinc-700 {
+  color: #cbd5e1 !important;
 }
 
 
