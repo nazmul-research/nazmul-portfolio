@@ -1238,9 +1238,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <h1 className="text-3xl font-bold text-white">Portfolio CMS Admin</h1>
           <p className="text-sm text-zinc-300">Control content, publish workflow, and homepage visibility from one place.</p>
         </div>
-        <form action="/api/auth/signout" method="post">
-          <button className="btn-secondary">Sign out</button>
-        </form>
+        <div className="flex items-center gap-2">
+          <a href="/api/admin/export" className="btn-secondary">Export Backup</a>
+          <form action="/api/auth/signout" method="post">
+            <button className="btn-secondary">Sign out</button>
+          </form>
+        </div>
       </header>
 
       {status && statusText[status] && !(panel === "blog" && ["post-added", "post-updated", "post-trashed", "post-restored", "post-deleted"].includes(status)) && (
