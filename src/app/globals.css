@@ -206,6 +206,35 @@ h1,h2,h3,.display-font {
   }
 }
 
+@media (max-width: 768px) {
+  .admin-panel form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-panel input,
+  .admin-panel textarea,
+  .admin-panel select,
+  .admin-panel button,
+  .admin-panel a.btn-secondary,
+  .admin-panel a.btn-primary,
+  .admin-panel a.btn-danger {
+    min-height: 42px;
+    font-size: 14px;
+  }
+
+  .admin-panel details {
+    margin-top: 0.75rem;
+  }
+
+  .admin-panel .btn-primary,
+  .admin-panel .btn-secondary,
+  .admin-panel .btn-danger {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
 .excerpt-fade {
   display: -webkit-box;
   -webkit-line-clamp: 3;
