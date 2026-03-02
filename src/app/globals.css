@@ -257,3 +257,49 @@ h1,h2,h3,.display-font {
 
 html[data-reading="compact"] article { line-height: 1.5 !important; }
 html[data-reading="compact"] article p { margin-top: .55rem !important; }
+
+
+/* Admin theme balancing (dark + light) */
+html[data-theme="light"] .admin-panel,
+html[data-theme="light"] .admin-panel details,
+html[data-theme="light"] .admin-panel form,
+html[data-theme="light"] .admin-panel .glass-card {
+  color: #111827;
+}
+
+html[data-theme="light"] .admin-panel .text-white { color: #111827 !important; }
+html[data-theme="light"] .admin-panel .text-zinc-300 { color: #374151 !important; }
+html[data-theme="light"] .admin-panel .text-zinc-400,
+html[data-theme="light"] .admin-panel .text-zinc-500 { color: #6b7280 !important; }
+
+html[data-theme="light"] .admin-panel input,
+html[data-theme="light"] .admin-panel textarea,
+html[data-theme="light"] .admin-panel select {
+  background: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+html[data-theme="light"] .admin-panel .btn-secondary {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+html[data-theme="dark"] .admin-panel input,
+html[data-theme="dark"] .admin-panel textarea,
+html[data-theme="dark"] .admin-panel select {
+  background: rgba(255,255,255,.04);
+  color: #f3f4f6;
+  border-color: rgba(255,255,255,.18);
+}
+
+html[data-theme="dark"] .admin-panel .btn-secondary {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.2);
+  color: #f3f4f6;
+}
+
+html[data-theme="dark"] .admin-panel .btn-secondary:hover {
+  background: rgba(255,255,255,.12);
+}
