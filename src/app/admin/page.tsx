@@ -743,6 +743,98 @@ async function deleteMediaAsset(formData: FormData) {
   adminRedirect("media-deleted");
 }
 
+
+async function createPublication(formData: FormData) {
+  "use server";
+
+  const parsed = publicationSchema.safeParse({
+    title: String(formData.get("title") || ""),
+    authors: String(formData.get("authors") || ""),
+    venue: String(formData.get("venue") || ""),
+    year: String(formData.get("year") || ""),
+    url: String(formData.get("url") || ""),
+    abstract: String(formData.get("abstract") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
+    published: asBool(formData.get("published")),
+  });
+
+  if (!parsed.success) adminRedirect("publication-invalid");
+
+  const normalizedAbstract = cleanOptional(parsed.data.abstract);
+  const normalizedExcerpt = cleanOptional(parsed.data.excerpt) || (normalizedAbstract ? makeExcerptFromAbstract(normalizedAbstract) : null);
+
+  await prisma.publication.create({
+    data: {
+      title: parsed.data.title,
+      authors: parsed.data.authors,
+      venue: parsed.data.venue,
+      year: parsed.data.year,
+      url: normalizeUrl(parsed.data.url),
+      abstract: normalizedAbstract,
+      excerpt: normalizedExcerpt,
+      published: parsed.data.published,
+    },
+  });
+
+  revalidatePath("/research");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "publication.create", targetType: "publication", targetId: parsed.data.title });
+  redirect("/admin?panel=research&status=publication-added");
+}
+
+async function updatePublication(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") || "").trim();
+  if (!id) adminRedirect("publication-invalid");
+
+  const parsed = publicationSchema.safeParse({
+    title: String(formData.get("title") || ""),
+    authors: String(formData.get("authors") || ""),
+    venue: String(formData.get("venue") || ""),
+    year: String(formData.get("year") || ""),
+    url: String(formData.get("url") || ""),
+    abstract: String(formData.get("abstract") || ""),
+    excerpt: String(formData.get("excerpt") || ""),
+    published: asBool(formData.get("published")),
+  });
+
+  if (!parsed.success) adminRedirect("publication-invalid");
+
+  const normalizedAbstract = cleanOptional(parsed.data.abstract);
+  const normalizedExcerpt = cleanOptional(parsed.data.excerpt) || (normalizedAbstract ? makeExcerptFromAbstract(normalizedAbstract) : null);
+
+  await prisma.publication.update({
+    where: { id },
+    data: {
+      title: parsed.data.title,
+      authors: parsed.data.authors,
+      venue: parsed.data.venue,
+      year: parsed.data.year,
+      url: normalizeUrl(parsed.data.url),
+      abstract: normalizedAbstract,
+      excerpt: normalizedExcerpt,
+      published: parsed.data.published,
+    },
+  });
+
+  revalidatePath("/research");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "publication.update", targetType: "publication", targetId: id });
+  redirect("/admin?panel=research&status=publication-updated");
+}
+
+async function deletePublication(formData: FormData) {
+  "use server";
+  const id = String(formData.get("id") || "").trim();
+  if (!id) adminRedirect("publication-delete-failed");
+
+  await prisma.publication.delete({ where: { id } });
+  revalidatePath("/research");
+  revalidatePath("/admin");
+  await writeAuditLog({ action: "publication.delete", targetType: "publication", targetId: id });
+  redirect("/admin?panel=research&status=publication-deleted");
+}
+
 const statusText: Record<string, string> = {
   "settings-saved": "✅ Settings saved",
   "settings-invalid": "⚠️ Settings invalid. Check required fields and URL/email format.",
