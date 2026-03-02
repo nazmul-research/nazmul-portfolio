@@ -120,6 +120,15 @@ model LoginThrottle {
   updatedAt   DateTime @updatedAt
 }
 
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  email      String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+}
+
 model MediaAsset {
   id        String   @id @default(cuid())
   url       String

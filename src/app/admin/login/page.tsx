@@ -6,6 +6,12 @@ import { FormEvent, useState } from "react";
 export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [resetOk] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("reset") === "success";
+  });
+
+;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,7 +60,9 @@ export default function AdminLoginPage() {
         </details>
 
         {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+        {resetOk && <p className="mt-2 text-sm text-emerald-600">Password reset successful. Please sign in.</p>}
         <button className="mt-4 w-full rounded-lg bg-zinc-900 py-2 text-white">Sign in</button>
+        <a href="/admin/forgot-password" className="mt-3 block text-center text-sm text-zinc-600 underline">Forgot password?</a>
       </form>
     </main>
   );
