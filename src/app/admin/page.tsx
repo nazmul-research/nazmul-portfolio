@@ -190,6 +190,10 @@ function projectRedirect(status: string): never {
   redirect(`/admin?panel=projects&status=${status}`);
 }
 
+function usersRedirect(status: string): never {
+  redirect(`/admin?panel=users&status=${status}`);
+}
+
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
@@ -592,7 +596,7 @@ async function hardDeleteProject(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+  if (!session?.user || role !== "owner") usersRedirect("admin-forbidden");
 
   const id = String(formData.get("id") || "").trim();
   if (!id) projectRedirect("project-delete-failed");
@@ -885,7 +889,7 @@ async function createAdminUser(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+  if (!session?.user || role !== "owner") usersRedirect("admin-forbidden");
 
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -893,10 +897,10 @@ async function createAdminUser(formData: FormData) {
   const nextRoleRaw = String(formData.get("role") || "editor").trim().toLowerCase();
   const nextRole = nextRoleRaw === "owner" ? "owner" : "editor";
 
-  if (!name || !email || password.length < 8) adminRedirect("admin-user-invalid");
+  if (!name || !email || password.length < 8) usersRedirect("admin-user-invalid");
 
   const existing = await prisma.adminUser.findUnique({ where: { email } });
-  if (existing) adminRedirect("admin-user-invalid");
+  if (existing) usersRedirect("admin-user-invalid");
 
   const hashed = await hashPassword(password);
   await prisma.adminUser.create({
@@ -911,23 +915,23 @@ async function createAdminUser(formData: FormData) {
 
   revalidatePath("/admin");
   await writeAuditLog({ action: "admin_user.create", targetType: "admin_user", targetId: email });
-  adminRedirect("admin-user-saved");
+  usersRedirect("admin-user-saved");
 }
 
 async function toggleAdminUserActive(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+  if (!session?.user || role !== "owner") usersRedirect("admin-forbidden");
 
   const id = String(formData.get("id") || "").trim();
   const active = String(formData.get("active") || "true") === "true";
-  if (!id) adminRedirect("admin-user-invalid");
+  if (!id) usersRedirect("admin-user-invalid");
 
   await prisma.adminUser.update({ where: { id }, data: { active: !active, sessionVersion: { increment: 1 } } });
   revalidatePath("/admin");
   await writeAuditLog({ action: active ? "admin_user.deactivate" : "admin_user.activate", targetType: "admin_user", targetId: id });
-  adminRedirect(active ? "admin-user-deactivated" : "admin-user-activated");
+  usersRedirect(active ? "admin-user-deactivated" : "admin-user-activated");
 }
 
 async function enableMyTotp(formData: FormData) {
@@ -999,7 +1003,7 @@ async function forceLogoutAllAdminSessions() {
   "use server";
   const session = await getServerSession(authOptions);
   const role = (session?.user as Record<string, unknown> | undefined)?.role;
-  if (!session?.user || role !== "owner") adminRedirect("admin-forbidden");
+  if (!session?.user || role !== "owner") usersRedirect("admin-forbidden");
 
   await prisma.adminUser.updateMany({ data: { sessionVersion: { increment: 1 } } });
   revalidatePath("/admin");
