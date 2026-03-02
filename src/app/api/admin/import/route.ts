@@ -38,10 +38,11 @@ export async function POST(req: Request) {
 
   await prisma.$transaction(async (tx) => {
     if (data.siteSettings && typeof data.siteSettings === "object") {
+      const siteSettings = data.siteSettings as Record<string, unknown>;
       await tx.siteSettings.upsert({
         where: { id: "main" },
-        update: data.siteSettings as never,
-        create: { id: "main", ...(data.siteSettings as never) },
+        update: siteSettings as never,
+        create: { id: "main", ...siteSettings } as never,
       });
     }
 
