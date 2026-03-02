@@ -968,30 +968,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </aside>
         
-      {panel === "about" && (
-      <section id="about-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">About CMS</h2>
-        <p className="mt-1 text-sm text-zinc-500">Manage about page text blocks and CV file.</p>
-
-        <form action={saveSettings} className="mt-4 grid gap-3">
-          <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="About block 1" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="About block 2" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="About block 3" className="min-h-28 rounded-lg border px-3 py-2" />
-
-          <div className="rounded-lg border p-3">
-            <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={(settings as unknown as { cvUrl?: string })?.cvUrl ?? ""} />
-            <CvUploader targetInputId="about-cv-url" />
-            {(settings as unknown as { cvUrl?: string })?.cvUrl && (
-              <a href={(settings as unknown as { cvUrl?: string }).cvUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">Open current CV</a>
-            )}
-          </div>
-
-          <SubmitButton idleText="Save About" pendingText="Saving..." className="btn-primary w-fit" />
-        </form>
-      </section>
-      )}
-
-{panel === "projects" && (
+      {panel === "projects" && (
           <form className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto_auto]">
             <input type="hidden" name="panel" value={panel} />
             <input
@@ -1121,12 +1098,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       {panel === "about" && (
       <section id="about-cms" className="admin-panel rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold">About CMS</h2>
-        <p className="mt-1 text-sm text-zinc-500">Manage about page text blocks and CV file.</p>
+        <p className="mt-1 text-sm text-zinc-500">Manage your About page content and CV file.</p>
 
         <form action={saveSettings} className="mt-4 grid gap-3">
-          <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="About block 1" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="About block 2" className="min-h-28 rounded-lg border px-3 py-2" />
-          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="About block 3" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock1" defaultValue={(settings as unknown as { aboutBlock1?: string })?.aboutBlock1 ?? ""} placeholder="Summary" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock2" defaultValue={(settings as unknown as { aboutBlock2?: string })?.aboutBlock2 ?? ""} placeholder="Career Experience" className="min-h-28 rounded-lg border px-3 py-2" />
+          <textarea name="aboutBlock3" defaultValue={(settings as unknown as { aboutBlock3?: string })?.aboutBlock3 ?? ""} placeholder="Education Experience" className="min-h-28 rounded-lg border px-3 py-2" />
 
           <div className="rounded-lg border p-3">
             <input id="about-cv-url" type="hidden" name="cvUrl" defaultValue={(settings as unknown as { cvUrl?: string })?.cvUrl ?? ""} />
