@@ -1314,6 +1314,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input name="fullName" defaultValue={settings?.fullName ?? "Nazmul Islam"} placeholder="Full name" className="rounded-lg border px-3 py-2" required />
               <input name="headline" defaultValue={settings?.headline ?? "AI • Robotics • Agent Systems"} placeholder="Headline" className="rounded-lg border px-3 py-2" required />
               <input name="availabilityTag" defaultValue={(settings as unknown as { availabilityTag?: string })?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"} placeholder="Availability tag" className="rounded-lg border px-3 py-2" />
+              <select name="themePreset" defaultValue={(settings as unknown as { themePreset?: string })?.themePreset ?? "midnight-tech"} className="rounded-lg border px-3 py-2">
+                <option value="midnight-tech">Theme: Midnight Tech</option>
+                <option value="paper-light">Theme: Paper Light</option>
+                <option value="neo-blue">Theme: Neo Blue</option>
+              </select>
               <input name="location" defaultValue={settings?.location ?? ""} placeholder="Location" className="rounded-lg border px-3 py-2" />
 
               <input type="email" name="email" defaultValue={settings?.email ?? ""} placeholder="Email" className="rounded-lg border px-3 py-2" />
