@@ -411,3 +411,30 @@ html[data-theme="light"] .admin-nav-link.text-white {
   color: #1e3a8a !important;
   border-color: rgba(59,130,246,0.45) !important;
 }
+
+
+/* Brand theme presets */
+body[data-brand-theme="paper-light"] .glow-btn {
+  background: linear-gradient(90deg, #0ea5e9, #4f46e5) !important;
+}
+body[data-brand-theme="paper-light"] .title-underline::after {
+  background: linear-gradient(90deg, #0ea5e9, #4f46e5);
+}
+body[data-brand-theme="paper-light"] .glass-card {
+  border-color: rgba(14,165,233,.25);
+}
+
+body[data-brand-theme="neo-blue"] .glow-btn {
+  background: linear-gradient(90deg, #2563eb, #06b6d4) !important;
+}
+body[data-brand-theme="neo-blue"] .title-underline::after {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+}
+body[data-brand-theme="neo-blue"] .glass-card {
+  border-color: rgba(59,130,246,.35);
+  box-shadow: 0 10px 30px rgba(37,99,235,.18);
+}
+
+body[data-brand-theme="midnight-tech"] .glow-btn {
+  background: linear-gradient(90deg, #4f46e5, #06b6d4) !important;
+}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import { prisma } from "@/lib/prisma";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -43,7 +44,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await prisma.siteSettings.findUnique({ where: { id: "main" }, select: { themePreset: true } });
+  const themePreset = settings?.themePreset || "midnight-tech";
+
   return (
     <html lang="en">
       <body className="text-zinc-100">
