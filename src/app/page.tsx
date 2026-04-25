@@ -2,6 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
 import { prisma } from "@/lib/prisma";
+import InteractiveCard from "@/components/interactive-card";
+import MagneticButton from "@/components/magnetic-button";
+import FadeUp from "@/components/fade-up";
+import ReadingProgress from "@/components/reading-progress";
+import PulsingDot from "@/components/pulsing-dot";
 
 function SocialIcon({ kind }: { kind: "email" | "phone" | "whatsapp" | "linkedin" | "github" | "scholar" | "researchgate" }) {
   const d: Record<string, string> = {
@@ -68,166 +73,201 @@ export default async function HomePage() {
 
   return (
     <main id="main-content" className="mx-auto max-w-6xl px-6 py-12">
+      <ReadingProgress />
       <Script
         id="person-jsonld"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
       />
-      <section className="fade-up relative overflow-hidden rounded-3xl border border-white/15 bg-white/[0.04] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl md:p-12">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/15 blur-3xl" />
+      <FadeUp>
+        <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-white/[0.04] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl md:p-12">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/15 blur-3xl" />
 
-        <div className="relative z-10 grid items-center gap-8 md:grid-cols-[1.25fr_.75fr]">
-          <div>
-            <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-zinc-200">{settings?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"}</p>
-            <h1 className="mt-4 display-font text-4xl font-extrabold tracking-tight text-white md:text-6xl">{settings?.fullName ?? "Nazmul Islam"}</h1>
-            <p className="mt-3 text-lg text-zinc-200 md:text-2xl">{settings?.headline ?? "AI • Robotics • Agent Systems"}</p>
-            <p className="mt-4 max-w-3xl text-zinc-300">{settings?.bio ?? "I build intelligent systems, practical software, and automation workflows that ship."}</p>
+          <div className="relative z-10 grid items-center gap-8 md:grid-cols-[1.25fr_.75fr]">
+            <div>
+              <p className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-zinc-200">
+                <PulsingDot />
+                {settings?.availabilityTag ?? "Available for Biomedical + AI + Robotics projects"}
+              </p>
+              <h1 className="mt-4 display-font text-4xl font-extrabold tracking-tight text-white md:text-6xl">{settings?.fullName ?? "Nazmul Islam"}</h1>
+              <p className="mt-3 text-lg text-zinc-200 md:text-2xl">{settings?.headline ?? "AI • Robotics • Agent Systems"}</p>
+              <p className="mt-4 max-w-3xl text-zinc-300">{settings?.bio ?? "I build intelligent systems, practical software, and automation workflows that ship."}</p>
 
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/projects" className="glow-btn rounded-xl bg-white px-4 py-2 text-zinc-900 shadow-sm transition hover:-translate-y-0.5">View Projects</Link>
-              <Link href="/blog" className="glow-btn rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10">Read Blog</Link>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <MagneticButton>
+                  <Link href="/projects" className="glow-btn block rounded-xl bg-white px-4 py-2 text-zinc-900 shadow-sm transition hover:-translate-y-0.5">View Projects</Link>
+                </MagneticButton>
+                <MagneticButton>
+                  <Link href="/blog" className="glow-btn block rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10">Read Blog</Link>
+                </MagneticButton>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2 text-sm">
+                {settings?.email && <MagneticButton><a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="email" />Email</a></MagneticButton>}
+                {socials?.cellNo && <MagneticButton><a href={`tel:${socials.cellNo.replace(/\s+/g, "")}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="phone" />{socials.cellNo}</a></MagneticButton>}
+                {socials?.whatsappUrl && <MagneticButton><a href={socials.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="whatsapp" />WhatsApp</a></MagneticButton>}
+                {socials?.linkedinUrl && <MagneticButton><a href={socials.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="linkedin" />LinkedIn</a></MagneticButton>}
+                {socials?.githubUrl && <MagneticButton><a href={socials.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 1</a></MagneticButton>}
+                {socials?.githubUrl2 && <MagneticButton><a href={socials.githubUrl2} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 2</a></MagneticButton>}
+                {socials?.scholarUrl && <MagneticButton><a href={socials.scholarUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="scholar" />Google Scholar</a></MagneticButton>}
+                {socials?.researchGateUrl && <MagneticButton><a href={socials.researchGateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="researchgate" />ResearchGate</a></MagneticButton>}
+              </div>
+
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2 text-sm">
-              {settings?.email && <a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="email" />Email</a>}
-              {socials?.cellNo && <a href={`tel:${socials.cellNo.replace(/\s+/g, "")}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="phone" />{socials.cellNo}</a>}
-              {socials?.whatsappUrl && <a href={socials.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="whatsapp" />WhatsApp</a>}
-              {socials?.linkedinUrl && <a href={socials.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="linkedin" />LinkedIn</a>}
-              {socials?.githubUrl && <a href={socials.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 1</a>}
-              {socials?.githubUrl2 && <a href={socials.githubUrl2} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="github" />GitHub 2</a>}
-              {socials?.scholarUrl && <a href={socials.scholarUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="scholar" />Google Scholar</a>}
-              {socials?.researchGateUrl && <a href={socials.researchGateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-zinc-200"><SocialIcon kind="researchgate" />ResearchGate</a>}
-            </div>
-          </div>
-
-          <div className="mx-auto md:ml-auto">
-            <div className="relative h-56 w-56 overflow-hidden rounded-full border-2 border-white/30 bg-white/5 p-2 shadow-[0_0_60px_rgba(99,102,241,0.35)]">
-              {(mediaAssets.length > 0 || settings?.avatarUrl) ? (
-                <>
-                  {mediaAssets.length > 0 ? (
-                    mediaAssets.map((m, idx) => (
+            <div className="mx-auto md:ml-auto">
+              <div className="relative h-56 w-56 overflow-hidden rounded-full border-2 border-white/30 bg-white/5 p-2 shadow-[0_0_60px_rgba(99,102,241,0.35)]">
+                {(mediaAssets.length > 0 || settings?.avatarUrl) ? (
+                  <>
+                    {mediaAssets.length > 0 ? (
+                      mediaAssets.map((m, idx) => (
+                        <Image
+                          key={m.id}
+                          src={m.url}
+                          alt={`Profile ${idx + 1}`}
+                          width={224}
+                          height={224}
+                          unoptimized
+                          className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover avatar-rotate"
+                          style={{ animationDelay: `${idx * 3.2}s`, animationDuration: `${Math.max(6, mediaAssets.length * 3.2)}s` }}
+                        />
+                      ))
+                    ) : (
                       <Image
-                        key={m.id}
-                        src={m.url}
-                        alt={`Profile ${idx + 1}`}
+                        src={settings!.avatarUrl!}
+                        alt={settings?.fullName ?? "Profile photo"}
                         width={224}
                         height={224}
                         unoptimized
-                        className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover avatar-rotate"
-                        style={{ animationDelay: `${idx * 3.2}s`, animationDuration: `${Math.max(6, mediaAssets.length * 3.2)}s` }}
+                        className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover"
                       />
-                    ))
-                  ) : (
-                    <Image
-                      src={settings!.avatarUrl!}
-                      alt={settings?.fullName ?? "Profile photo"}
-                      width={224}
-                      height={224}
-                      unoptimized
-                      className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] rounded-full object-cover"
-                    />
-                  )}
-                </>
-              ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-white/5 text-xs text-zinc-300">Upload your photo in CMS → Site Settings</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="fade-up mt-10 grid gap-4 md:grid-cols-3">
-        {stats.map(([k, v, s]) => (
-          <div key={k} className="glass-card rounded-2xl p-5">
-            <p className="text-xs uppercase tracking-wide text-zinc-400">{k}</p>
-            <p className="mt-1 text-2xl font-bold text-white">{v}</p>
-            <p className="mt-1 text-sm text-zinc-300">{s}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="fade-up mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] py-3">
-        <div className="auto-scroll-track whitespace-nowrap text-sm text-zinc-300">
-          {marquee.concat(marquee).map((item, idx) => (
-            <span key={idx} className="mx-4 inline-block">{item}</span>
-          ))}
-        </div>
-      </section>
-
-      <section className="fade-up mt-12">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="title-underline text-2xl font-semibold text-white">Featured Projects</h2>
-          <Link href="/projects" className="text-sm text-zinc-400 hover:text-white">See all</Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {projects.length === 0 ? (
-            <div className="glass-card rounded-2xl p-5 text-zinc-300 md:col-span-3">Projects are being curated. Check back soon.</div>
-          ) : (
-            projects.map((p) => (
-              <Link key={p.id} href={`/projects/${p.slug}`} className="group glass-card rounded-2xl p-5 transition hover:-translate-y-1 hover:bg-white/[0.05]">
-                {p.imageUrl && (
-                  <Image
-                    src={p.imageUrl}
-                    alt={p.title}
-                    width={640}
-                    height={256}
-                    unoptimized
-                    className="mb-3 h-32 w-full rounded-lg object-cover"
-                  />
+                    )}
+                  </>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-white/5 text-xs text-zinc-300">Upload your photo in CMS → Site Settings</div>
                 )}
-                <h3 className="font-semibold text-white group-hover:text-zinc-100">{p.title}</h3>
-                <p className="mt-2 text-sm text-zinc-300">{p.summary}</p>
-                {p.stack && <p className="mt-3 text-xs text-zinc-400">{p.stack}</p>}
-              </Link>
-            ))
-          )}
-        </div>
-      </section>
+              </div>
+            </div>
+          </div>
+        </section>
+      </FadeUp>
 
-      <section className="fade-up mt-12">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="title-underline text-2xl font-semibold text-white">Recent Writing</h2>
-          <Link href="/blog" className="text-sm text-zinc-400 hover:text-white">See all</Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {posts.length === 0 ? (
-            <div className="glass-card rounded-2xl p-5 text-zinc-300 md:col-span-3">No posts yet. Fresh writing coming soon.</div>
-          ) : (
-            posts.map((b) => (
-              <Link key={b.id} href={`/blog/${b.slug}`} className="tilt-card glass-card rounded-2xl p-5 transition hover:bg-white/[0.05]">
-                <h3 className="font-semibold text-white">{b.title}</h3>
-                <p className="mt-2 text-sm text-zinc-300">{b.excerpt}</p>
-              </Link>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className="fade-up mt-12 rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-        <h2 className="text-2xl font-semibold text-white">How I work</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {[
-            ["1. Discover", "Clarify problem, constraints, and success metrics."],
-            ["2. Build", "Rapid prototyping with production-minded architecture."],
-            ["3. Iterate", "Measure, improve, and scale what works."],
-          ].map(([t, d]) => (
-            <div key={t} className="rounded-2xl bg-black/20 p-4">
-              <p className="font-medium text-white">{t}</p>
-              <p className="mt-1 text-sm text-zinc-300">{d}</p>
+      <FadeUp delay={0.1}>
+        <section className="mt-10 grid gap-4 md:grid-cols-3">
+          {stats.map(([k, v, s]) => (
+            <div key={k} className="group relative glass-card overflow-hidden rounded-2xl p-5 transition-all hover:border-white/30">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <p className="relative text-xs uppercase tracking-wide text-zinc-400">{k}</p>
+              <p className="relative mt-1 text-2xl font-bold text-white">{v}</p>
+              <p className="relative mt-1 text-sm text-zinc-300">{s}</p>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
+      </FadeUp>
 
-      <section className="fade-up mt-12 rounded-3xl border border-white/15 bg-gradient-to-r from-indigo-500/20 to-sky-500/20 p-8 text-zinc-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-        <h2 className="text-2xl font-semibold">Let’s build something great.</h2>
-        <p className="mt-2 text-zinc-200">Open to product consulting, automation systems, and AI-first engineering work.</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {settings?.email && <a href={`mailto:${settings.email}`} className="glow-btn rounded-xl bg-white px-4 py-2 text-zinc-900">Email Me</a>}
-          {settings?.linkedinUrl && <a href={settings.linkedinUrl} className="rounded-xl border border-white/40 bg-white/5 px-4 py-2" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
-        </div>
-      </section>
+      <FadeUp delay={0.2}>
+        <section className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] py-3">
+          <div className="auto-scroll-track whitespace-nowrap text-sm text-zinc-300">
+            {marquee.concat(marquee).map((item, idx) => (
+              <span key={idx} className="mx-4 inline-block">{item}</span>
+            ))}
+          </div>
+        </section>
+      </FadeUp>
+
+      <FadeUp delay={0.3}>
+        <section className="mt-12">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="title-underline text-2xl font-semibold text-white">Featured Projects</h2>
+            <Link href="/projects" className="text-sm text-zinc-400 hover:text-white">See all</Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {projects.length === 0 ? (
+              <div className="glass-card rounded-2xl p-5 text-zinc-300 md:col-span-3">Projects are being curated. Check back soon.</div>
+            ) : (
+              projects.map((p) => (
+                <InteractiveCard key={p.id}>
+                  <Link href={`/projects/${p.slug}`} className="group block h-full glass-card rounded-2xl p-5 transition hover:bg-white/[0.05]">
+                    {p.imageUrl && (
+                      <Image
+                        src={p.imageUrl}
+                        alt={p.title}
+                        width={640}
+                        height={256}
+                        unoptimized
+                        className="mb-3 h-32 w-full rounded-lg object-cover"
+                      />
+                    )}
+                    <h3 className="font-semibold text-white group-hover:text-zinc-100">{p.title}</h3>
+                    <p className="mt-2 text-sm text-zinc-300">{p.summary}</p>
+                    {p.stack && <p className="mt-3 text-xs text-zinc-400">{p.stack}</p>}
+                  </Link>
+                </InteractiveCard>
+              ))
+            )}
+          </div>
+        </section>
+      </FadeUp>
+
+      <FadeUp delay={0.4}>
+        <section className="mt-12">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="title-underline text-2xl font-semibold text-white">Recent Writing</h2>
+            <Link href="/blog" className="text-sm text-zinc-400 hover:text-white">See all</Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {posts.length === 0 ? (
+              <div className="glass-card rounded-2xl p-5 text-zinc-300 md:col-span-3">No posts yet. Fresh writing coming soon.</div>
+            ) : (
+              posts.map((b) => (
+                <InteractiveCard key={b.id}>
+                  <Link href={`/blog/${b.slug}`} className="block h-full glass-card rounded-2xl p-5 transition hover:bg-white/[0.05]">
+                    <h3 className="font-semibold text-white">{b.title}</h3>
+                    <p className="mt-2 text-sm text-zinc-300">{b.excerpt}</p>
+                  </Link>
+                </InteractiveCard>
+              ))
+            )}
+          </div>
+        </section>
+      </FadeUp>
+
+      <FadeUp delay={0.5}>
+        <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-2xl font-semibold text-white">How I work</h2>
+            <div className="flex items-center text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded-full border border-green-400/20">
+              <span className="h-1.5 w-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse" />
+              PROCESS LIVE
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              ["1. Discover", "Clarify problem, constraints, and success metrics."],
+              ["2. Build", "Rapid prototyping with production-minded architecture."],
+              ["3. Iterate", "Measure, improve, and scale what works."],
+            ].map(([t, d]) => (
+              <div key={t} className="group relative rounded-2xl bg-black/20 p-4 border border-white/5 transition-all hover:border-white/20">
+                <div className="absolute inset-0 bg-white/[0.02] opacity-0 transition-opacity group-hover:opacity-100 rounded-2xl" />
+                <p className="relative font-medium text-white">{t}</p>
+                <p className="relative mt-1 text-sm text-zinc-300">{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </FadeUp>
+
+      <FadeUp delay={0.6}>
+        <section className="mt-12 rounded-3xl border border-white/15 bg-gradient-to-r from-indigo-500/20 to-sky-500/20 p-8 text-zinc-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <h2 className="text-2xl font-semibold">Let’s build something great.</h2>
+          <p className="mt-2 text-zinc-200">Open to product consulting, automation systems, and AI-first engineering work.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {settings?.email && <a href={`mailto:${settings.email}`} className="glow-btn rounded-xl bg-white px-4 py-2 text-zinc-900">Email Me</a>}
+            {settings?.linkedinUrl && <a href={settings.linkedinUrl} className="rounded-xl border border-white/40 bg-white/5 px-4 py-2" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
+          </div>
+        </section>
+      </FadeUp>
     </main>
   );
 }

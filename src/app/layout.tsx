@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import CursorFollower from "@/components/cursor-follower";
+import CustomCursor from "@/components/custom-cursor";
+import SpatialBackground from "@/components/spatial-background";
 import { prisma } from "@/lib/prisma";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -55,6 +58,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <Navbar />
+        <CursorFollower />
+        <CustomCursor />
+        <SpatialBackground />
         {children}
         <footer className="mt-12 border-t border-white/10 py-6 text-center text-sm text-zinc-400">© 2026 Nazmul</footer>
 
